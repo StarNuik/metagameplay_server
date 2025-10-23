@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+service Meta {
+	rpc Echo(EchoRequest) returns (EchoRespone) {}
+}
+
+message EchoRequest {
+	string message = 1;
+}
+
+message EchoRespone {
+	string message = 1;
+}

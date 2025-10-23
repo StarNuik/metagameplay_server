@@ -13,3 +13,4 @@ lint?
 - sqlite
 - cli wrapper
 - тесты
+- миграции
