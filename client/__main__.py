@@ -7,15 +7,7 @@ from dependency_injector.wiring import Provide, inject
 # from api import api_pb2_grpc as api
 from api import api_pb2 as dto
 
-class SessionStorage:
-	def save(self, session) -> None:
-		print(f"[SessionStorage.save()]\n{session}")
-	def read(self) -> dto.UserSession:
-		out = dto.UserSession()
-		print(f"[SessionStorage.read()]\n{out}")
-		return out
-	def drop(self) -> None:
-		print(f"[SessionStorage.drop()]")
+from client import *
 
 class AuthService:
 	def __init__(self, session_storage: SessionStorage):
