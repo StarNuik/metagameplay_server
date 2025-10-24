@@ -1,2 +1,2 @@
-from user_session import UserSession
-from session_storage import SessionStorage
+from client.user_session import UserSession
+from client.session_storage import SessionStorage, StubSessionStorage

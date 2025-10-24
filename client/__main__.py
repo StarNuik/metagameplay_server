@@ -28,7 +28,7 @@ class AuthService:
 
 class Container(containers.DeclarativeContainer):
 	session_storage = providers.Factory(
-		SessionStorage,
+		StubSessionStorage,
 	)
 	auth_service = providers.Factory(
 		AuthService,
