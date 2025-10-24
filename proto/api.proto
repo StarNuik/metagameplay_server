@@ -8,22 +8,28 @@ service Auth {
 }
 
 message RegisterReq {
-	string username = 1;
+	optional string username = 1;
 }
 
 message LoginReq {
-	string username = 1;
+	optional string username = 1;
 }
 
 message UserSession {
-	string session_token = 1;
+	optional string session_token = 1;
 }
 
 service Meta {
 	rpc Echo(EchoReq) returns (EchoResp) {}
 	rpc GetUserInventory(google.protobuf.Empty) returns (UserInventory) {}
-	rpc GetItemsList(google.protobuf.Empty) returns (ItemsList) {}
+	rpc GetShopItems(google.protobuf.Empty) returns (ItemsList) {}
 	rpc BuyItem(BuyItemReq) returns (google.protobuf.Empty) {}
+}
+
+message Item {
+	optional int64 id = 1;
+	optional int64 price = 2;
+	optional string name = 3;
 }
 
 message GetUserInventoryReq {}
@@ -31,12 +37,15 @@ message ItemsListReq {}
 message BuyItemReq {}
 
 message UserInventory {}
-message ItemsList {}
+
+message ItemsList {
+	repeated Item items = 1;
+}
 
 message EchoReq {
-	string message = 1;
+	optional string message = 1;
 }
 
 message EchoResp {
-	string message = 1;
+	optional string message = 1;
 }

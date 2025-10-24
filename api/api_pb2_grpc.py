@@ -160,8 +160,8 @@ class MetaStub(object):
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
                 response_deserializer=api__pb2.UserInventory.FromString,
                 _registered_method=True)
-        self.GetItemsList = channel.unary_unary(
-                '/Meta/GetItemsList',
+        self.GetShopItems = channel.unary_unary(
+                '/Meta/GetShopItems',
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
                 response_deserializer=api__pb2.ItemsList.FromString,
                 _registered_method=True)
@@ -187,7 +187,7 @@ class MetaServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetItemsList(self, request, context):
+    def GetShopItems(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -212,8 +212,8 @@ def add_MetaServicer_to_server(servicer, server):
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                     response_serializer=api__pb2.UserInventory.SerializeToString,
             ),
-            'GetItemsList': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetItemsList,
+            'GetShopItems': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetShopItems,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                     response_serializer=api__pb2.ItemsList.SerializeToString,
             ),
@@ -288,7 +288,7 @@ class Meta(object):
             _registered_method=True)
 
     @staticmethod
-    def GetItemsList(request,
+    def GetShopItems(request,
             target,
             options=(),
             channel_credentials=None,
@@ -301,7 +301,7 @@ class Meta(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Meta/GetItemsList',
+            '/Meta/GetShopItems',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             api__pb2.ItemsList.FromString,
             options,

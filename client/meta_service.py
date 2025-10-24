@@ -11,7 +11,8 @@ class MetaService:
 	def get_inventory(self, args):
 		pass
 	def get_shop(self, args):
-		self.api.GetItemsList(Empty())
+		items = self.api.GetShopItems(Empty())
+		print(items)
 		pass
 	def buy_item(self, args):
 		pass
