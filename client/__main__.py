@@ -4,40 +4,44 @@ import argparse
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
-# from api import api_pb2_grpc as api
+from api import api_pb2_grpc as api
 from api import api_pb2 as dto
 
 from client import *
 
-class AuthService:
-	def __init__(self, session_storage: SessionStorage):
-		self.session_storage = session_storage
-		pass
-
-	def register(self, args):
-		print(f"[AuthService.register()]\nurl: {args.url}, username: {args.username}")
-		self.session_storage.save({"url": args.url, "username": args.username})
-
-	def login(self, args):
-		print(f"[AuthService.login()]\nurl: {args.url}, username: {args.username}")
-		self.session_storage.save({"url": args.url, "username": args.username})
-
-	def logout(self, _):
-		print("[AuthService.logout()]")
-		self.session_storage.drop()
-
 class Container(containers.DeclarativeContainer):
-	session_storage = providers.Factory(
-		StubSessionStorage,
+	config = providers.Configuration(json_files = ["./config.json"])
+
+	grpc_channel = providers.Resource(
+		grpc.insecure_channel,
+		config.hostname,
 	)
-	auth_service = providers.Factory(
-		AuthService,
-		session_storage = session_storage,
+	api_meta = providers.Singleton(
+		api.MetaStub,
+		grpc_channel,
 	)
+
+	meta_service = providers.Singleton(
+		MetaService,
+		api_meta,
+	)
+	# session_storage = providers.Singleton(
+	# 	StubSessionStorage,
+	# )
+	# api_auth = providers.Singleton(
+	# 	api.AuthStub,
+	# 	grpc_channel,
+	# )
+	# auth_service = providers.Singleton(
+	# 	AuthService,
+	# 	session_storage = session_storage,
+	# 	api_auth = api_auth,
+	# )
 
 @inject
 def create_parser(
-	auth: AuthService = Provide[Container.auth_service],
+	# auth: AuthService = Provide[Container.auth_service],
+	meta: MetaService = Provide[Container.meta_service],
 ) -> argparse.ArgumentParser:
 	parser = argparse.ArgumentParser()
 	subparsers = parser.add_subparsers(
@@ -45,27 +49,33 @@ def create_parser(
 		required = True,
 	)
 
-	register = subparsers.add_parser(
-		name = "register",
-		help = "create a new user"
+	shop = subparsers.add_parser(
+		"shop",
+		help = "show all shop items",
 	)
-	register.set_defaults(func = auth.register)
-	register.add_argument("url")
-	register.add_argument("username")
+	shop.set_defaults(func = meta.get_shop)
 
-	login = subparsers.add_parser(
-		name = "login",
-		help = "use credentials to login"
-	)
-	login.set_defaults(func = auth.login)
-	login.add_argument("url")
-	login.add_argument("username")
+	# register = subparsers.add_parser(
+	# 	name = "register",
+	# 	help = "create a new user",
+	# )
+	# register.set_defaults(func = auth.register)
+	# register.add_argument("hostname")
+	# register.add_argument("username")
 
-	logout = subparsers.add_parser(
-		name = "logout",
-		help = "end the current session"
-	)
-	logout.set_defaults(func = auth.logout)
+	# login = subparsers.add_parser(
+	# 	name = "login",
+	# 	help = "use credentials to login"
+	# )
+	# login.set_defaults(func = auth.login)
+	# login.add_argument("hostname")
+	# login.add_argument("username")
+
+	# logout = subparsers.add_parser(
+	# 	name = "logout",
+	# 	help = "end the current session"
+	# )
+	# logout.set_defaults(func = auth.logout)
 	return parser
 
 def main():
@@ -76,6 +86,8 @@ def main():
 	parser = create_parser()
 	args = parser.parse_args()
 	args.func(args)
+
+	container.shutdown_resources()
 
 	# with grpc.insecure_channel("localhost:50051") as channel:
 	# 	stub = api.MetaStub(channel)
