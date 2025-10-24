@@ -2,6 +2,15 @@ syntax = "proto3";
 
 service Meta {
 	rpc Echo(EchoRequest) returns (EchoRespone) {}
+	rpc Login(LoginRequest) returns (LoginResponse) {}
+}
+
+message LoginRequest {
+	string username = 1;
+}
+
+message LoginResponse {
+	string session_token = 1;
 }
 
 message EchoRequest {
