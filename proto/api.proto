@@ -1,22 +1,42 @@
 syntax = "proto3";
 
-service Meta {
-	rpc Echo(EchoRequest) returns (EchoRespone) {}
-	rpc Login(LoginRequest) returns (LoginResponse) {}
+import "google/protobuf/empty.proto";
+
+service Auth {
+	rpc Register(RegisterReq) returns (UserSession) {}
+	rpc Login(LoginReq) returns (UserSession) {}
 }
 
-message LoginRequest {
+message RegisterReq {
 	string username = 1;
 }
 
-message LoginResponse {
+message LoginReq {
+	string username = 1;
+}
+
+message UserSession {
 	string session_token = 1;
 }
 
-message EchoRequest {
+service Meta {
+	rpc Echo(EchoReq) returns (EchoResp) {}
+	rpc GetUserInventory(google.protobuf.Empty) returns (UserInventory) {}
+	rpc GetItemsList(google.protobuf.Empty) returns (ItemsList) {}
+	rpc BuyItem(BuyItemReq) returns (google.protobuf.Empty) {}
+}
+
+message GetUserInventoryReq {}
+message ItemsListReq {}
+message BuyItemReq {}
+
+message UserInventory {}
+message ItemsList {}
+
+message EchoReq {
 	string message = 1;
 }
 
-message EchoRespone {
+message EchoResp {
 	string message = 1;
 }
