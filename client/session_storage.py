@@ -4,7 +4,7 @@ from client import UserSession
 
 class SessionStorage(ABC):
 	@abstractmethod
-	def save(self, session) -> None:
+	def save(self, session: UserSession) -> None:
 		pass
 	
 	@abstractmethod
@@ -16,7 +16,7 @@ class SessionStorage(ABC):
 		pass
 
 class StubSessionStorage(SessionStorage):
-	def save(self, session) -> None:
+	def save(self, session: UserSession) -> None:
 		print(f"[StubSessionStorage.save()]\n{session}")
 	
 	def read(self) -> UserSession:

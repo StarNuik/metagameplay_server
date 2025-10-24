@@ -10,6 +10,13 @@ class TestUserSession(unittest.TestCase):
 		self.assertEqual(session.hostname, args[0])
 		self.assertEqual(session.username, args[1])
 		self.assertEqual(session.token, args[2])
+	
+	def test_eq(self):
+		args = ["hostname", "username", "token"]
+		session1 = UserSession(args[0], args[1], args[2])
+		session2 = UserSession(args[0], args[1], args[2])
+
+		self.assertTrue(session1 == session2)
 
 if __name__ == '__main__':
     unittest.main()
