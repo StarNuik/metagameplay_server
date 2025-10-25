@@ -3,7 +3,7 @@ from sqlalchemy import select, Engine
 import sqlalchemy
 from sqlalchemy.orm import Session
 
-from server.model import Item, install_model
+from server.model import Item
 
 class MetaRepository:
 	def __init__(self, items, database: Engine):

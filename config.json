@@ -7,6 +7,10 @@
 		"hostname": "localhost:65432"
 	},
 	"data": {
+		"credits_reward": {
+			"min": 10,
+			"max": 100
+		},
 		"items": [
 			{
 				"name": "Item 1",

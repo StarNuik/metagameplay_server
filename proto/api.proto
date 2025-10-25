@@ -1,14 +1,7 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
-
 service Auth {
-	rpc Register(RegisterReq) returns (UserSession) {}
 	rpc Login(LoginReq) returns (UserSession) {}
-}
-
-message RegisterReq {
-	optional string username = 1;
 }
 
 message LoginReq {
@@ -20,11 +13,13 @@ message UserSession {
 }
 
 service Meta {
-	rpc Echo(EchoReq) returns (EchoResp) {}
-	rpc GetUserInventory(google.protobuf.Empty) returns (UserInventory) {}
-	rpc GetShopItems(google.protobuf.Empty) returns (ItemsList) {}
-	rpc BuyItem(BuyItemReq) returns (google.protobuf.Empty) {}
+	rpc Login(Empty) returns (UserData) {}
+	rpc GetUserData(Empty) returns (UserData) {}
+	rpc GetShopItems(Empty) returns (ItemsList) {}
+	rpc BuyItem(BuyItemReq) returns (Empty) {}
 }
+
+message Empty {}
 
 message Item {
 	optional int64 id = 1;
@@ -36,16 +31,12 @@ message GetUserInventoryReq {}
 message ItemsListReq {}
 message BuyItemReq {}
 
-message UserInventory {}
+message UserData {
+	optional string username = 1;
+	optional int32 credits = 2;
+	repeated Item items = 3;
+}
 
 message ItemsList {
 	repeated Item items = 1;
-}
-
-message EchoReq {
-	optional string message = 1;
-}
-
-message EchoResp {
-	optional string message = 1;
 }

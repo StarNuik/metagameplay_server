@@ -10,9 +10,8 @@ def install_model(e: Engine):
 class User(Model):
 	__tablename__ = "users"
 
-	id: Mapped[int] = Column("id", Integer, Identity(always = True), primary_key = True)
-	username: Mapped[str] = mapped_column(Text, nullable = False)
-	balance: Mapped[int] = mapped_column(Integer, nullable = False)
+	username: Mapped[str] = mapped_column(Text, primary_key = True)
+	balance: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
 
 class Item(Model):
 	__tablename__ = "items"

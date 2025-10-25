@@ -22,8 +22,15 @@ class Container(containers.DeclarativeContainer):
 		create_engine,
 	)
 
+	auth_repository = providers.Singleton(
+		AuthRepository,
+		database = database_client,
+		logger = logger,
+	)
 	auth_usecase = providers.Singleton(
 		AuthUsecase,
+		auth_repository = auth_repository,
+		logger = logger,
 	)
 	auth_servicer = providers.Singleton(
 		AuthServicer,

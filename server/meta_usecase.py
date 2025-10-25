@@ -7,5 +7,5 @@ class MetaUsecase():
 	def __init__(self, db: MetaRepository):
 		self.db = db
 
-	def get_all_items(self):
+	def get_shop_items(self):
 		return self.db.get_all_items()

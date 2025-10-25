@@ -4,7 +4,6 @@ import grpc
 import warnings
 
 import api_pb2 as api__pb2
-from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
@@ -35,11 +34,6 @@ class AuthStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Register = channel.unary_unary(
-                '/Auth/Register',
-                request_serializer=api__pb2.RegisterReq.SerializeToString,
-                response_deserializer=api__pb2.UserSession.FromString,
-                _registered_method=True)
         self.Login = channel.unary_unary(
                 '/Auth/Login',
                 request_serializer=api__pb2.LoginReq.SerializeToString,
@@ -50,12 +44,6 @@ class AuthStub(object):
 class AuthServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Register(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def Login(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -65,11 +53,6 @@ class AuthServicer(object):
 
 def add_AuthServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Register': grpc.unary_unary_rpc_method_handler(
-                    servicer.Register,
-                    request_deserializer=api__pb2.RegisterReq.FromString,
-                    response_serializer=api__pb2.UserSession.SerializeToString,
-            ),
             'Login': grpc.unary_unary_rpc_method_handler(
                     servicer.Login,
                     request_deserializer=api__pb2.LoginReq.FromString,
@@ -85,33 +68,6 @@ def add_AuthServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class Auth(object):
     """Missing associated documentation comment in .proto file."""
-
-    @staticmethod
-    def Register(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(
-            request,
-            target,
-            '/Auth/Register',
-            api__pb2.RegisterReq.SerializeToString,
-            api__pb2.UserSession.FromString,
-            options,
-            channel_credentials,
-            insecure,
-            call_credentials,
-            compression,
-            wait_for_ready,
-            timeout,
-            metadata,
-            _registered_method=True)
 
     @staticmethod
     def Login(request,
@@ -150,38 +106,38 @@ class MetaStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Echo = channel.unary_unary(
-                '/Meta/Echo',
-                request_serializer=api__pb2.EchoReq.SerializeToString,
-                response_deserializer=api__pb2.EchoResp.FromString,
+        self.Login = channel.unary_unary(
+                '/Meta/Login',
+                request_serializer=api__pb2.Empty.SerializeToString,
+                response_deserializer=api__pb2.UserData.FromString,
                 _registered_method=True)
-        self.GetUserInventory = channel.unary_unary(
-                '/Meta/GetUserInventory',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-                response_deserializer=api__pb2.UserInventory.FromString,
+        self.GetUserData = channel.unary_unary(
+                '/Meta/GetUserData',
+                request_serializer=api__pb2.Empty.SerializeToString,
+                response_deserializer=api__pb2.UserData.FromString,
                 _registered_method=True)
         self.GetShopItems = channel.unary_unary(
                 '/Meta/GetShopItems',
-                request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                request_serializer=api__pb2.Empty.SerializeToString,
                 response_deserializer=api__pb2.ItemsList.FromString,
                 _registered_method=True)
         self.BuyItem = channel.unary_unary(
                 '/Meta/BuyItem',
                 request_serializer=api__pb2.BuyItemReq.SerializeToString,
-                response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                response_deserializer=api__pb2.Empty.FromString,
                 _registered_method=True)
 
 
 class MetaServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Echo(self, request, context):
+    def Login(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetUserInventory(self, request, context):
+    def GetUserData(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -202,25 +158,25 @@ class MetaServicer(object):
 
 def add_MetaServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Echo': grpc.unary_unary_rpc_method_handler(
-                    servicer.Echo,
-                    request_deserializer=api__pb2.EchoReq.FromString,
-                    response_serializer=api__pb2.EchoResp.SerializeToString,
+            'Login': grpc.unary_unary_rpc_method_handler(
+                    servicer.Login,
+                    request_deserializer=api__pb2.Empty.FromString,
+                    response_serializer=api__pb2.UserData.SerializeToString,
             ),
-            'GetUserInventory': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetUserInventory,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
-                    response_serializer=api__pb2.UserInventory.SerializeToString,
+            'GetUserData': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetUserData,
+                    request_deserializer=api__pb2.Empty.FromString,
+                    response_serializer=api__pb2.UserData.SerializeToString,
             ),
             'GetShopItems': grpc.unary_unary_rpc_method_handler(
                     servicer.GetShopItems,
-                    request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+                    request_deserializer=api__pb2.Empty.FromString,
                     response_serializer=api__pb2.ItemsList.SerializeToString,
             ),
             'BuyItem': grpc.unary_unary_rpc_method_handler(
                     servicer.BuyItem,
                     request_deserializer=api__pb2.BuyItemReq.FromString,
-                    response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+                    response_serializer=api__pb2.Empty.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -234,7 +190,7 @@ class Meta(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Echo(request,
+    def Login(request,
             target,
             options=(),
             channel_credentials=None,
@@ -247,9 +203,9 @@ class Meta(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Meta/Echo',
-            api__pb2.EchoReq.SerializeToString,
-            api__pb2.EchoResp.FromString,
+            '/Meta/Login',
+            api__pb2.Empty.SerializeToString,
+            api__pb2.UserData.FromString,
             options,
             channel_credentials,
             insecure,
@@ -261,7 +217,7 @@ class Meta(object):
             _registered_method=True)
 
     @staticmethod
-    def GetUserInventory(request,
+    def GetUserData(request,
             target,
             options=(),
             channel_credentials=None,
@@ -274,9 +230,9 @@ class Meta(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Meta/GetUserInventory',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
-            api__pb2.UserInventory.FromString,
+            '/Meta/GetUserData',
+            api__pb2.Empty.SerializeToString,
+            api__pb2.UserData.FromString,
             options,
             channel_credentials,
             insecure,
@@ -302,7 +258,7 @@ class Meta(object):
             request,
             target,
             '/Meta/GetShopItems',
-            google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            api__pb2.Empty.SerializeToString,
             api__pb2.ItemsList.FromString,
             options,
             channel_credentials,
@@ -330,7 +286,7 @@ class Meta(object):
             target,
             '/Meta/BuyItem',
             api__pb2.BuyItemReq.SerializeToString,
-            google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            api__pb2.Empty.FromString,
             options,
             channel_credentials,
             insecure,

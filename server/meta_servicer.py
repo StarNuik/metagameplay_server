@@ -8,7 +8,7 @@ class MetaServicer(api.MetaServicer):
 		self.usecase = usecase
 
 	def GetShopItems(self, _, context):
-		items = self.usecase.get_all_items()
+		items = self.usecase.get_shop_items()
 		return dto.ItemsList(items = map(lambda item : dto.Item(
 			id = item.id,
 			price = item.price,

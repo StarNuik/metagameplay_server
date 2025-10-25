@@ -22,40 +22,35 @@ _runtime_version.ValidateProtobufRuntimeVersion(
 _sym_db = _symbol_database.Default()
 
 
-from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tapi.proto\x1a\x1bgoogle/protobuf/empty.proto\"1\n\x0bRegisterReq\x12\x15\n\x08username\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x0b\n\t_username\".\n\x08LoginReq\x12\x15\n\x08username\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x0b\n\t_username\";\n\x0bUserSession\x12\x1a\n\rsession_token\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x10\n\x0e_session_token\"X\n\x04Item\x12\x0f\n\x02id\x18\x01 \x01(\x03H\x00\x88\x01\x01\x12\x12\n\x05price\x18\x02 \x01(\x03H\x01\x88\x01\x01\x12\x11\n\x04name\x18\x03 \x01(\tH\x02\x88\x01\x01\x42\x05\n\x03_idB\x08\n\x06_priceB\x07\n\x05_name\"\x15\n\x13GetUserInventoryReq\"\x0e\n\x0cItemsListReq\"\x0c\n\nBuyItemReq\"\x0f\n\rUserInventory\"!\n\tItemsList\x12\x14\n\x05items\x18\x01 \x03(\x0b\x32\x05.Item\"+\n\x07\x45\x63hoReq\x12\x14\n\x07message\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\n\n\x08_message\",\n\x08\x45\x63hoResp\x12\x14\n\x07message\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\n\n\x08_message2T\n\x04\x41uth\x12(\n\x08Register\x12\x0c.RegisterReq\x1a\x0c.UserSession\"\x00\x12\"\n\x05Login\x12\t.LoginReq\x1a\x0c.UserSession\"\x00\x32\xcb\x01\n\x04Meta\x12\x1d\n\x04\x45\x63ho\x12\x08.EchoReq\x1a\t.EchoResp\"\x00\x12<\n\x10GetUserInventory\x12\x16.google.protobuf.Empty\x1a\x0e.UserInventory\"\x00\x12\x34\n\x0cGetShopItems\x12\x16.google.protobuf.Empty\x1a\n.ItemsList\"\x00\x12\x30\n\x07\x42uyItem\x12\x0b.BuyItemReq\x1a\x16.google.protobuf.Empty\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tapi.proto\".\n\x08LoginReq\x12\x15\n\x08username\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x0b\n\t_username\";\n\x0bUserSession\x12\x1a\n\rsession_token\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x10\n\x0e_session_token\"\x07\n\x05\x45mpty\"X\n\x04Item\x12\x0f\n\x02id\x18\x01 \x01(\x03H\x00\x88\x01\x01\x12\x12\n\x05price\x18\x02 \x01(\x03H\x01\x88\x01\x01\x12\x11\n\x04name\x18\x03 \x01(\tH\x02\x88\x01\x01\x42\x05\n\x03_idB\x08\n\x06_priceB\x07\n\x05_name\"\x15\n\x13GetUserInventoryReq\"\x0e\n\x0cItemsListReq\"\x0c\n\nBuyItemReq\"f\n\x08UserData\x12\x15\n\x08username\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x14\n\x07\x63redits\x18\x02 \x01(\x05H\x01\x88\x01\x01\x12\x14\n\x05items\x18\x03 \x03(\x0b\x32\x05.ItemB\x0b\n\t_usernameB\n\n\x08_credits\"!\n\tItemsList\x12\x14\n\x05items\x18\x01 \x03(\x0b\x32\x05.Item2*\n\x04\x41uth\x12\"\n\x05Login\x12\t.LoginReq\x1a\x0c.UserSession\"\x00\x32\x90\x01\n\x04Meta\x12\x1c\n\x05Login\x12\x06.Empty\x1a\t.UserData\"\x00\x12\"\n\x0bGetUserData\x12\x06.Empty\x1a\t.UserData\"\x00\x12$\n\x0cGetShopItems\x12\x06.Empty\x1a\n.ItemsList\"\x00\x12 \n\x07\x42uyItem\x12\x0b.BuyItemReq\x1a\x06.Empty\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'api_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_REGISTERREQ']._serialized_start=42
-  _globals['_REGISTERREQ']._serialized_end=91
-  _globals['_LOGINREQ']._serialized_start=93
-  _globals['_LOGINREQ']._serialized_end=139
-  _globals['_USERSESSION']._serialized_start=141
-  _globals['_USERSESSION']._serialized_end=200
-  _globals['_ITEM']._serialized_start=202
-  _globals['_ITEM']._serialized_end=290
-  _globals['_GETUSERINVENTORYREQ']._serialized_start=292
-  _globals['_GETUSERINVENTORYREQ']._serialized_end=313
-  _globals['_ITEMSLISTREQ']._serialized_start=315
-  _globals['_ITEMSLISTREQ']._serialized_end=329
-  _globals['_BUYITEMREQ']._serialized_start=331
-  _globals['_BUYITEMREQ']._serialized_end=343
-  _globals['_USERINVENTORY']._serialized_start=345
-  _globals['_USERINVENTORY']._serialized_end=360
-  _globals['_ITEMSLIST']._serialized_start=362
-  _globals['_ITEMSLIST']._serialized_end=395
-  _globals['_ECHOREQ']._serialized_start=397
-  _globals['_ECHOREQ']._serialized_end=440
-  _globals['_ECHORESP']._serialized_start=442
-  _globals['_ECHORESP']._serialized_end=486
-  _globals['_AUTH']._serialized_start=488
-  _globals['_AUTH']._serialized_end=572
-  _globals['_META']._serialized_start=575
-  _globals['_META']._serialized_end=778
+  _globals['_LOGINREQ']._serialized_start=13
+  _globals['_LOGINREQ']._serialized_end=59
+  _globals['_USERSESSION']._serialized_start=61
+  _globals['_USERSESSION']._serialized_end=120
+  _globals['_EMPTY']._serialized_start=122
+  _globals['_EMPTY']._serialized_end=129
+  _globals['_ITEM']._serialized_start=131
+  _globals['_ITEM']._serialized_end=219
+  _globals['_GETUSERINVENTORYREQ']._serialized_start=221
+  _globals['_GETUSERINVENTORYREQ']._serialized_end=242
+  _globals['_ITEMSLISTREQ']._serialized_start=244
+  _globals['_ITEMSLISTREQ']._serialized_end=258
+  _globals['_BUYITEMREQ']._serialized_start=260
+  _globals['_BUYITEMREQ']._serialized_end=272
+  _globals['_USERDATA']._serialized_start=274
+  _globals['_USERDATA']._serialized_end=376
+  _globals['_ITEMSLIST']._serialized_start=378
+  _globals['_ITEMSLIST']._serialized_end=411
+  _globals['_AUTH']._serialized_start=413
+  _globals['_AUTH']._serialized_end=455
+  _globals['_META']._serialized_start=458
+  _globals['_META']._serialized_end=602
 # @@protoc_insertion_point(module_scope)
