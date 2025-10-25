@@ -34,23 +34,24 @@ class GrpcServer:
 		self.server = server
 		self.log = log
 	
-	def start(self):
-		self.server.start()
-	
-	def wait_for_termination(self):
-		self.server.wait_for_termination()
-	
 	def graceful_run(self):
 		try:
 			self.server.start()
 			self.server.wait_for_termination()
-		except KeyboardInterrupt as e:
+		except KeyboardInterrupt:
 			self.log.info("Graceful shutdown")
 		finally:
 			self.log.info("Waiting for the server to finish")
 			self.server.stop(5).wait()
 			self.log.info("All finished, exiting")
 
+import sqlalchemy
+
+def create_engine() -> sqlalchemy.Engine:
+	engine = sqlalchemy.create_engine("sqlite:///db.sqlite3")
+	install_model(engine)
+	return engine
+	
 
 class Container(containers.DeclarativeContainer):
 	config = providers.Configuration(json_files = ["./config.json"])
@@ -60,13 +61,18 @@ class Container(containers.DeclarativeContainer):
 		__name__,
 	)
 
-	meta_db = providers.Singleton(
-		MetaDatabase,
-		config.data.items,
+	database_client = providers.Singleton(
+		create_engine,
+	)
+
+	meta_repo = providers.Singleton(
+		MetaRepository,
+		items = config.data.items,
+		database = database_client,
 	)
 	meta_usecase = providers.Singleton(
 		MetaUsecase,
-		meta_db,
+		meta_repo,
 	)
 	meta_servicer = providers.Singleton(
 		MetaServicer,
