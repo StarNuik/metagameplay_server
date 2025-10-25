@@ -4,9 +4,9 @@ from api import api_pb2 as dto
 import grpc
 from google.protobuf.empty_pb2 import Empty
 
-class MetaService:
-	def __init__(self, api_meta: api.MetaStub):
-		self.api = api_meta
+class MetaUsecase:
+	def __init__(self, meta_api: api.MetaStub):
+		self.api = meta_api
 
 	def get_inventory(self, args):
 		pass

@@ -5,5 +5,5 @@ class AuthServicer(api.AuthServicer):
 	def __init__(self):
 		pass
 
-	def Login(self, request, context):
-		return dto.UserSession(session_token = "invalid token")
+	def Login(self, request: dto.LoginReq, context):
+		return dto.UserSession(session_token = f"{request.username}")

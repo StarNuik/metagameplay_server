@@ -1,3 +1,4 @@
+import logging
 import grpc
 import argparse
 
@@ -16,32 +17,39 @@ class Container(containers.DeclarativeContainer):
 		grpc.insecure_channel,
 		config.client.hostname,
 	)
-	api_meta = providers.Singleton(
+
+	logger = providers.Singleton(
+		logging.getLogger,
+		__name__,
+	)
+
+	meta_api = providers.Singleton(
 		api.MetaStub,
 		grpc_channel,
 	)
-
-	meta_service = providers.Singleton(
-		MetaService,
-		api_meta,
+	meta_usecase = providers.Singleton(
+		MetaUsecase,
+		meta_api,
 	)
+
 	# session_storage = providers.Singleton(
 	# 	StubSessionStorage,
 	# )
-	# api_auth = providers.Singleton(
-	# 	api.AuthStub,
-	# 	grpc_channel,
-	# )
-	# auth_service = providers.Singleton(
-	# 	AuthService,
-	# 	session_storage = session_storage,
-	# 	api_auth = api_auth,
-	# )
+	meta_auth = providers.Singleton(
+		api.AuthStub,
+		grpc_channel,
+	)
+	auth_usecase = providers.Singleton(
+		AuthUsecase,
+		session_storage = None,
+		auth_api = meta_auth,
+		logger = logger,
+	)
 
 @inject
 def create_parser(
-	# auth: AuthService = Provide[Container.auth_service],
-	meta: MetaService = Provide[Container.meta_service],
+	auth: AuthUsecase = Provide[Container.auth_usecase],
+	meta: MetaUsecase = Provide[Container.meta_usecase],
 ) -> argparse.ArgumentParser:
 	parser = argparse.ArgumentParser()
 	subparsers = parser.add_subparsers(
@@ -63,13 +71,13 @@ def create_parser(
 	# register.add_argument("hostname")
 	# register.add_argument("username")
 
-	# login = subparsers.add_parser(
-	# 	name = "login",
-	# 	help = "use credentials to login"
-	# )
-	# login.set_defaults(func = auth.login)
+	login = subparsers.add_parser(
+		name = "login",
+		help = "use credentials to login"
+	)
+	login.set_defaults(func = auth.login)
 	# login.add_argument("hostname")
-	# login.add_argument("username")
+	login.add_argument("username")
 
 	# logout = subparsers.add_parser(
 	# 	name = "logout",
@@ -79,6 +87,10 @@ def create_parser(
 	return parser
 
 def main():
+	logging.basicConfig(
+		level=logging.INFO,
+	)
+	
 	container = Container()
 	container.init_resources()
 	container.wire(modules=[__name__])
