@@ -17,7 +17,7 @@ class Item(Base):
 
 class MetaDatabase:
 	def __init__(self, items):
-		self.engine = create_engine("sqlite:///db.sqlite3", echo = True)
+		self.engine = create_engine("sqlite:///db.sqlite3")
 		Base.metadata.create_all(self.engine)
 
 		with Session(self.engine) as session:
