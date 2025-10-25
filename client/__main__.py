@@ -14,7 +14,7 @@ class Container(containers.DeclarativeContainer):
 
 	grpc_channel = providers.Resource(
 		grpc.insecure_channel,
-		config.hostname,
+		config.client.hostname,
 	)
 	api_meta = providers.Singleton(
 		api.MetaStub,
