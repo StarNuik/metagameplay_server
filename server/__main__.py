@@ -27,7 +27,6 @@ def run_server(grpc_server: GrpcServer = Provide[Container.grpc_server]):
 	grpc_server.start()
 	grpc_server.wait_for_termination()
 
-import asyncio
 def main():
 	logging.basicConfig(
 		level=logging.INFO,

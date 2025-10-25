@@ -1,8 +1,9 @@
-from server.model import install_model, User, Item
-from server.meta_repository import MetaRepository
-from server.meta_usecase import MetaUsecase
-from server.meta_servicer import MetaServicer
-from server.auth_servicer import AuthServicer
-from server.grpc_server import GrpcServer
+from .model import install_model, User, Item
+from .meta_repository import MetaRepository
+from .meta_usecase import MetaUsecase
+from .meta_servicer import MetaServicer
+from .auth_usecase import AuthUsecase
+from .auth_servicer import AuthServicer
 
-from server.container import Container
+from .grpc_server import GrpcServer
+from .container import Container

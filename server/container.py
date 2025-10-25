@@ -22,8 +22,12 @@ class Container(containers.DeclarativeContainer):
 		create_engine,
 	)
 
+	auth_usecase = providers.Singleton(
+		AuthUsecase,
+	)
 	auth_servicer = providers.Singleton(
 		AuthServicer,
+		auth_usecase = auth_usecase,
 	)
 
 	meta_repo = providers.Singleton(
