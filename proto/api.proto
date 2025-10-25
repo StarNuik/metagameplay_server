@@ -13,7 +13,7 @@ message UserSession {
 }
 
 service Meta {
-	rpc Login(Empty) returns (UserData) {}
+	rpc Login2(Empty) returns (UserData) {}
 	rpc GetUserData(Empty) returns (UserData) {}
 	rpc GetShopItems(Empty) returns (ItemsList) {}
 	rpc BuyItem(BuyItemReq) returns (Empty) {}

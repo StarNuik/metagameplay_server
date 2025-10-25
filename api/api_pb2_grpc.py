@@ -106,8 +106,8 @@ class MetaStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Login = channel.unary_unary(
-                '/Meta/Login',
+        self.Login2 = channel.unary_unary(
+                '/Meta/Login2',
                 request_serializer=api__pb2.Empty.SerializeToString,
                 response_deserializer=api__pb2.UserData.FromString,
                 _registered_method=True)
@@ -131,7 +131,7 @@ class MetaStub(object):
 class MetaServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Login(self, request, context):
+    def Login2(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -158,8 +158,8 @@ class MetaServicer(object):
 
 def add_MetaServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Login': grpc.unary_unary_rpc_method_handler(
-                    servicer.Login,
+            'Login2': grpc.unary_unary_rpc_method_handler(
+                    servicer.Login2,
                     request_deserializer=api__pb2.Empty.FromString,
                     response_serializer=api__pb2.UserData.SerializeToString,
             ),
@@ -190,7 +190,7 @@ class Meta(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Login(request,
+    def Login2(request,
             target,
             options=(),
             channel_credentials=None,
@@ -203,7 +203,7 @@ class Meta(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Meta/Login',
+            '/Meta/Login2',
             api__pb2.Empty.SerializeToString,
             api__pb2.UserData.FromString,
             options,
