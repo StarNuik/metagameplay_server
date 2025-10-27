@@ -53,31 +53,19 @@ class LoggingInterceptor(grpc.ServerInterceptor):
 class Servicer(api.AuthServicer, api.ShopServicer):
 	def __init__(self,
 		logger: Logger,
-		model: Model,
+		db_session_factory: providers.Callable[DbSession],
 		reward_amount_factory: providers.Callable[int],
 	):
 		self.log = logger
-		self.model = model
+		self.db_session = db_session_factory
 		self.reward_amount = reward_amount_factory
 
-	def Login(self, req: dto.LoginReq, context):
-		if not self.model.user_exists(req.username):
-			self.model.create_user(req.username)
-		session = jwts.Session(req.username)
-		jwt = jwts.pack(session)
-		return dto.UserSession(session_token = jwt)
-
-	def GetLoginReward(self, _, context):
-		session = jwts.from_context(context)
-		username = session.username
-		reward = self.reward_amount()
-		self.model.add_credits(username, reward)
-		return self.GetUserData(_, context)
-
-	def GetUserData(self, _, context):
-		session = jwts.from_context(context)
-		username = session.username
-		user = self.model.get_user(username)
+	def __get_user_data(self,
+		db: DbSession,
+		user_session: jwts.Session
+	) -> dto.User:
+		username = user_session.username
+		user = db.get_user(username)
 		user = dto.User(
 			username = username,
 			credits = user.balance,
@@ -85,20 +73,69 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 		)
 		return user
 
+	def Login(self, req: dto.LoginReq, context):
+		with self.db_session() as db, db.begin():
+			if not db.user_exists(req.username):
+				db.create_user(req.username)
+		
+		user_session = jwts.Session(req.username)
+		jwt = jwts.pack(user_session)
+		return dto.UserSession(session_token = jwt)
+
+	def GetLoginReward(self, _, context):
+		with self.db_session() as db, db.begin():
+			user_session = jwts.from_context(context)
+
+			username = user_session.username
+			reward = self.reward_amount()
+			db.add_credits(username, reward)
+		
+			return self.__get_user_data(db, user_session)
+
+	def GetUserData(self, _, context):
+		with self.db_session() as db:
+			user_session = jwts.from_context(context)
+			
+			return self.__get_user_data(db, user_session)
+
 	def GetShopItems(self, _, context):
-		items = self.model.get_all_items()
-		resp = dto.ItemsList(items = map(
-			lambda item : dto.Item(
-				name = item.name,
-				price = item.price
-			), items))
-		return resp
+		with self.db_session() as db:
+			items = db.get_all_items()
+			resp = dto.ItemsList(items = map(
+				lambda item : dto.Item(
+					name = item.name,
+					price = item.price
+				), items))
+			return resp
+
+	def BuyItem(self, request: dto.BuyItemReq, context: grpc.ServicerContext):
+		with self.db_session() as db, db.begin():
+			item = db.get_item(request.item_name)
+			if item == None:
+				context.abort(grpc.StatusCode.INVALID_ARGUMENT, "item doesn't exist")
+				return
+		
+			user_session = jwts.from_context(context)
+			user = db.get_user(user_session.username)
+			if item.price > user.balance:
+				context.abort(grpc.StatusCode.FAILED_PRECONDITION, "not enough credits")
+				return
+		
+			self.log.info(f"buying item: {item}")
+
+			db.add_credits(user.username, -item.price)
+			db.add_item_ownership(user, item, 1)
+
+			return self.__get_user_data(db, user_session)
+			context.abort(grpc.StatusCode.FAILED_PRECONDITION, "message")
+			# return super().BuyItem(request, context)
 
 SQLITE_PATH = "./.server.db"
 
-def connect_database() -> Engine:
+def connect_database(item_list) -> Engine:
 	engine = create_engine(f"sqlite:///{SQLITE_PATH}")
 	install_model(engine)
+	migrate_items(engine, item_list)
 	return engine
 
 def items_from_config(items) -> list[Item]:
@@ -122,21 +159,21 @@ class Container(containers.DeclarativeContainer):
 	)
 
 	# Database
-	item_list_factory = providers.Factory(
+	item_list = providers.Factory(
 		items_from_config,
 		config.data.items,
 	)
 	database_client = providers.Singleton(
 		connect_database,
+		item_list = item_list,
 	)
 	session_factory = providers.Factory(
 		Session,
 		database_client,
 	)
-	model = providers.Singleton(
-		Model,
+	db_session = providers.Factory(
+		DbSession,
 		session_factory = session_factory.provider,
-		item_list_factory = item_list_factory.provider,
 	)
 
 	# business
@@ -148,7 +185,7 @@ class Container(containers.DeclarativeContainer):
 	servicer = providers.Singleton(
 		Servicer,
 		logger = logger,
-		model = model,
+		db_session_factory = db_session.provider,
 		reward_amount_factory = reward_amount_factory.provider,
 	)
 

@@ -1,8 +1,8 @@
 import sqlalchemy
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import Text, Integer, ForeignKey, Engine, select, update
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session
+from sqlalchemy import Text, Integer, BigInteger, Column, Identity, ForeignKey, Engine, select, update
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session, attribute_keyed_dict
 from dependency_injector import providers
 
 class _Table(DeclarativeBase):
@@ -14,6 +14,11 @@ class User(_Table):
 	username: Mapped[str] = mapped_column(Text, primary_key = True)
 	balance: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
 
+	owned_items: Mapped[dict[str, "ItemOwnership"]] = relationship(
+		back_populates = "owner",
+		collection_class = attribute_keyed_dict("item_name"),
+	)
+
 class Item(_Table):
 	__tablename__ = "items"
 
@@ -21,54 +26,87 @@ class Item(_Table):
 	price: Mapped[int] = mapped_column(Integer, nullable = False)
 
 	def __str__(self):
-		return f"{{id: {self.id}, name: {self.name}, price: {self.price}}}"
+		return f"{{name: {self.name}, price: {self.price}}}"
+
+class ItemOwnership(_Table):
+	__tablename__ = "item_ownership"
+
+	# sqlite only
+	id: Mapped[int] = mapped_column(Integer, primary_key = True, autoincrement = True)
+	# id: Mapped[int] = Column("id", BigInteger, Identity(always = True), primary_key = True)
+	quantity: Mapped[int] = mapped_column(Integer, nullable = False, default = 0)
+	
+	item_name: Mapped[str] = mapped_column(ForeignKey("items.name"))
+	owner_username: Mapped[str] = mapped_column(ForeignKey("users.username"))
+
+	item: Mapped["Item"] = relationship()
+	owner: Mapped["User"] = relationship(back_populates = "owned_items")
 
 def install_model(engine: Engine):
 	_Table.metadata.create_all(engine)
 
-class Model:
+def migrate_items(engine: Engine, item_list: list[Item]):
+	try:
+		with Session(engine) as session, session.begin():
+			session.add_all(item_list)
+			session.commit()
+	except IntegrityError:
+		pass
+
+class DbSession:
 	def __init__(self,
 		session_factory: providers.Callable[Session],
-		item_list_factory: providers.Callable[list[Item]],
 	):
-		self.session = session_factory
+		self.session = session_factory()
 
-		try:
-			self.create_items(item_list_factory())
-		except IntegrityError:
-			pass
+	def __enter__(self):
+		self.session = self.session.__enter__()
+		return self
+	
+	def __exit__(self, type_, value, traceback):
+		self.session.__exit__(type_, value, traceback)
+		self.session = None
 
+	def begin(self):
+		return self.session.begin()
+	
 	# Read
 	def user_exists(self, username: str) -> bool:
-		with self.session() as session:
-			stmt = select(User).where(User.username == username)
-			return session.scalars(stmt).first() != None
+		stmt = select(User).where(User.username == username)
+		return self.session.scalar(stmt)
 	
 	def get_user(self, username: str) -> User:
-		with self.session() as session:
-			stmt = select(User).where(User.username == username)
-			return session.scalars(stmt).one()
+		stmt = select(User).where(User.username == username)
+		return self.session.scalars(stmt).one()
 	
 	def get_all_items(self) -> list[Item]:
-		with self.session() as session:
-			stmt = select(Item)
-			return session.scalars(stmt).all()
+		stmt = select(Item)
+		return self.session.scalars(stmt).all()
+		
+	def get_item(self, item_name: str) -> Item | None:
+		stmt = select(Item) \
+			.where(Item.name == item_name)
+		return self.session.scalar(stmt)
 
 	# Modify
-	def create_items(self, items: list[Item]):
-		with self.session() as session:
-			session.add_all(items)
-			session.commit()
-	
 	def create_user(self, username: str):
-		with self.session() as session:
-			session.add(User(username = username))
-			session.commit()
+		self.session.add(User(username = username))
 		
 	def add_credits(self, username: str, amount: int):
-		with self.session() as session:
-			stmt = update(User) \
-				.where(User.username == username) \
-				.values(balance = User.balance + amount)
-			session.execute(stmt)
-			session.commit()
+		stmt = update(User) \
+			.where(User.username == username) \
+			.values(balance = User.balance + amount)
+		self.session.execute(stmt)
+	
+	def add_item_ownership(self, user: User, item: Item, amount: int):
+		if not item.name in user.owned_items:
+			user.owned_items[item.name] = ItemOwnership(
+				quantity = amount,
+				owner_username = user.username,
+				item_name = item.name,
+			)
+		else:
+			user.owned_items[item.name].quantity += amount
+
+
+	
