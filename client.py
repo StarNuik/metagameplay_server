@@ -54,11 +54,13 @@ class ClientUsecase:
 		self.log.info(f"user data: {resp}")
 
 	def logout(self, _):
-		pass
+		self.session.delete_token()
+		self.log.info("logged out")
+
 	def get_shop_items(self, args):
 		resp: dto.ItemsList = self.meta.GetShopItems(dto.Empty())
 		self.log.info(f"all items: {resp}")
-		pass
+
 	def buy_item(self, args):
 		pass
 	def sell_item(self, args):
@@ -158,6 +160,12 @@ def create_parser(
 		help = "list all items in shop",
 	)
 	register.set_defaults(func = usecase.get_shop_items)
+
+	register = subparsers.add_parser(
+		name = "logout",
+		help = "forget the current user",
+	)
+	register.set_defaults(func = usecase.logout)
 	return parser
 
 def main():
