@@ -23,14 +23,12 @@ class Empty(_message.Message):
     def __init__(self) -> None: ...
 
 class Item(_message.Message):
-    __slots__ = ("id", "price", "name")
-    ID_FIELD_NUMBER: _ClassVar[int]
-    PRICE_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("name", "price")
     NAME_FIELD_NUMBER: _ClassVar[int]
-    id: int
-    price: int
+    PRICE_FIELD_NUMBER: _ClassVar[int]
     name: str
-    def __init__(self, id: _Optional[int] = ..., price: _Optional[int] = ..., name: _Optional[str] = ...) -> None: ...
+    price: int
+    def __init__(self, name: _Optional[str] = ..., price: _Optional[int] = ...) -> None: ...
 
 class GetUserInventoryReq(_message.Message):
     __slots__ = ()

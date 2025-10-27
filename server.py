@@ -1,88 +1,22 @@
 from json import JSONEncoder
-import json
 from pathlib import Path
 import random
 import grpc
 import threading
 import logging
 import signal
-import jwt
 from concurrent import futures
+from sqlalchemy import Engine, create_engine
+from sqlalchemy.orm import Session
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 from logging import Logger
-from sqlalchemy import Text, BigInteger, Integer, ForeignKey, Identity, Column, Engine, create_engine, select, update
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session
-from jwt.exceptions import PyJWTError
+
 
 from api import api_pb2 as dto
 from api import api_pb2_grpc as api
-
-class ModelBase(DeclarativeBase):
-	pass
-
-class User(ModelBase):
-	__tablename__ = "users"
-
-	username: Mapped[str] = mapped_column(Text, primary_key = True)
-	balance: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
-
-class Item(ModelBase):
-	__tablename__ = "items"
-
-	id: Mapped[int] = Column("id", BigInteger, Identity(always = True), primary_key = True)
-	name: Mapped[str] = mapped_column(Text, nullable = False)
-	price: Mapped[int] = mapped_column(Integer, nullable = False)
-
-	def __str__(self):
-		return f"{{id: {self.id}, name: {self.name}, price: {self.price}}}"
-
-JWT_SECRET = "meow"
-JWT_ALGO = "HS256"
-JWT_PAYLOAD_KEY = "__payload"
-JWT_HEADER = "session_token"
-
-class SessionPayload():
-	def __init__(self, username):
-		self.username = username
-	def as_json(self):
-		return json.dumps(self, default = lambda obj : obj.__dict__)
-
-def as_payload(jsn: str) -> SessionPayload:
-	dct = json.loads(jsn)
-	return SessionPayload(dct["username"])
-
-def jwt_pack(payload: SessionPayload) -> str:
-	jwt_payload = {
-		JWT_PAYLOAD_KEY: payload.as_json(),
-	}
-	token = jwt.encode(jwt_payload, JWT_SECRET, algorithm = JWT_ALGO)
-	return token
-
-def jwt_unpack(token: str) -> SessionPayload | None:
-	try:
-		jwt_payload = jwt.decode(token, JWT_SECRET, algorithms = [JWT_ALGO])
-		payload_string = jwt_payload[JWT_PAYLOAD_KEY]
-		payload = as_payload(payload_string)
-		return payload
-	except PyJWTError:
-		return None
-
-def jwt_from_metadata(metadata: dict[str, str | bytes]) -> SessionPayload | None:
-	if not JWT_HEADER in metadata:
-		return None
-	token = metadata[JWT_HEADER]
-
-	payload = jwt_unpack(token)
-	return payload
-
-def jwt_from_details(details: grpc.HandlerCallDetails) -> SessionPayload | None:
-	metadata = dict(details.invocation_metadata)
-	return jwt_from_metadata(metadata)
-
-def jwt_from_context(context: grpc.ServicerContext) -> SessionPayload | None:
-	metadata = dict(context.invocation_metadata())
-	return jwt_from_metadata(metadata)
+from server import *
+from server import jwt_session as jwts
 
 class AuthInterceptor(grpc.ServerInterceptor):
 	def __init__(self):
@@ -95,9 +29,9 @@ class AuthInterceptor(grpc.ServerInterceptor):
 		path = Path(handler_call_details.method)
 		if path.parts[1] == "Auth":
 			return continuation(handler_call_details)
-		
-		payload = jwt_from_details(handler_call_details)
-		if payload == None:
+
+		session = jwts.from_details(handler_call_details)
+		if session == None:
 			return self.abort_handler
 		
 		resp = continuation(handler_call_details)
@@ -116,37 +50,6 @@ class LoggingInterceptor(grpc.ServerInterceptor):
 		
 		return resp
 
-class Model:
-	def __init__(self,
-		session_factory: providers.Callable[Session]
-	):
-		self.session = session_factory
-
-	# Read
-	def user_exists(self, username: str) -> bool:
-		with self.session() as session:
-			stmt = select(User).where(User.username == username)
-			return session.scalars(stmt).first() != None
-	
-	def get_user(self, username: str) -> User:
-		with self.session() as session:
-			stmt = select(User).where(User.username == username)
-			return session.scalars(stmt).one()
-
-	# Update
-	def create_user(self, username: str):
-		with self.session() as session:
-			session.add(User(username = username))
-			session.commit()
-		
-	def add_credits(self, username: str, amount: int):
-		with self.session() as session:
-			stmt = update(User) \
-				.where(User.username == username) \
-				.values(balance = User.balance + amount)
-			session.execute(stmt)
-			session.commit()
-
 class Servicer(api.AuthServicer, api.MetaServicer):
 	def __init__(self,
 		logger: Logger,
@@ -160,27 +63,49 @@ class Servicer(api.AuthServicer, api.MetaServicer):
 	def Login(self, req: dto.LoginReq, context):
 		if not self.model.user_exists(req.username):
 			self.model.create_user(req.username)
-		payload = SessionPayload(req.username)
-		token = jwt_pack(payload)
-		return dto.UserSession(session_token = token)
+		session = jwts.Session(req.username)
+		jwt = jwts.pack(session)
+		return dto.UserSession(session_token = jwt)
 
 	def Login2(self, _, context):
-		payload = jwt_from_context(context)
-		username = payload.username
+		session = jwts.from_context(context)
+		username = session.username
 		reward = self.reward_amount()
 		self.model.add_credits(username, reward)
 		return self.GetUserData(_, context)
 
 	def GetUserData(self, _, context):
-		payload = jwt_from_context(context)
-		username = payload.username
+		session = jwts.from_context(context)
+		username = session.username
 		user = self.model.get_user(username)
-		return dto.UserData(username = username, credits = user.balance, items = [],)
+		user = dto.UserData(
+			username = username,
+			credits = user.balance,
+			items = [],
+		)
+		return user
+
+	def GetShopItems(self, _, context):
+		items = self.model.get_all_items()
+		resp = dto.ItemsList(items = map(
+			lambda item : dto.Item(
+				name = item.name,
+				price = item.price
+			), items))
+		return resp
+
+SQLITE_PATH = "./.server.db"
 
 def connect_database() -> Engine:
-	engine = create_engine("sqlite:///db.sqlite3")
-	ModelBase.metadata.create_all(engine)
+	engine = create_engine(f"sqlite:///{SQLITE_PATH}")
+	install_model(engine)
 	return engine
+
+def items_from_config(items) -> list[Item]:
+	return map(lambda item : Item(
+				name = item["name"],
+				price = item["price"],
+	), items)
 
 class Container(containers.DeclarativeContainer):
 	config = providers.Configuration(json_files = ["./config.json"])
@@ -197,6 +122,10 @@ class Container(containers.DeclarativeContainer):
 	)
 
 	# Database
+	item_list_factory = providers.Factory(
+		items_from_config,
+		config.data.items,
+	)
 	database_client = providers.Singleton(
 		connect_database,
 	)
@@ -207,6 +136,7 @@ class Container(containers.DeclarativeContainer):
 	model = providers.Singleton(
 		Model,
 		session_factory = session_factory.provider,
+		item_list_factory = item_list_factory.provider,
 	)
 
 	# business
@@ -246,13 +176,6 @@ def run(container: Container):
 		log.info("Waiting for the server to finish")
 		server.stop(5).wait()
 		log.info("All finished, exiting")
-
-# def create_engine() -> sqlalchemy.Engine:
-# 	engine = sqlalchemy.create_engine("sqlite:///db.sqlite3")
-# 	install_model(engine)
-# 	return engine
-
-
 
 def main():
 	logging.basicConfig(

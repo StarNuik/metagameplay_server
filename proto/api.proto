@@ -17,19 +17,20 @@ service Meta {
 	rpc GetUserData(Empty) returns (UserData) {}
 	rpc GetShopItems(Empty) returns (ItemsList) {}
 	rpc BuyItem(BuyItemReq) returns (Empty) {}
+	rpc SellItem(SellItemReq) returns (Empty) {}
 }
 
 message Empty {}
 
 message Item {
-	optional int64 id = 1;
+	optional string name = 1;
 	optional int64 price = 2;
-	optional string name = 3;
 }
 
 message GetUserInventoryReq {}
 message ItemsListReq {}
 message BuyItemReq {}
+message SellItemReq {}
 
 message UserData {
 	optional string username = 1;
