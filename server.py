@@ -50,7 +50,7 @@ class LoggingInterceptor(grpc.ServerInterceptor):
 		
 		return resp
 
-class Servicer(api.AuthServicer, api.MetaServicer):
+class Servicer(api.AuthServicer, api.ShopServicer):
 	def __init__(self,
 		logger: Logger,
 		model: Model,
@@ -67,7 +67,7 @@ class Servicer(api.AuthServicer, api.MetaServicer):
 		jwt = jwts.pack(session)
 		return dto.UserSession(session_token = jwt)
 
-	def Login2(self, _, context):
+	def GetLoginReward(self, _, context):
 		session = jwts.from_context(context)
 		username = session.username
 		reward = self.reward_amount()
@@ -78,7 +78,7 @@ class Servicer(api.AuthServicer, api.MetaServicer):
 		session = jwts.from_context(context)
 		username = session.username
 		user = self.model.get_user(username)
-		user = dto.UserData(
+		user = dto.User(
 			username = username,
 			credits = user.balance,
 			items = [],
@@ -164,7 +164,7 @@ def run(container: Container):
 	)
 	server.add_insecure_port(f"[::]:{container.config.server.port()}")
 	
-	api.add_MetaServicer_to_server(container.servicer(), server)
+	api.add_ShopServicer_to_server(container.servicer(), server)
 	api.add_AuthServicer_to_server(container.servicer(), server)
 
 	try:

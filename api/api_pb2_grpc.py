@@ -26,7 +26,8 @@ if _version_not_supported:
 
 
 class AuthStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """Authorization
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -42,7 +43,8 @@ class AuthStub(object):
 
 
 class AuthServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """Authorization
+    """
 
     def Login(self, request, context):
         """Missing associated documentation comment in .proto file."""
@@ -67,7 +69,8 @@ def add_AuthServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class Auth(object):
-    """Missing associated documentation comment in .proto file."""
+    """Authorization
+    """
 
     @staticmethod
     def Login(request,
@@ -97,8 +100,9 @@ class Auth(object):
             _registered_method=True)
 
 
-class MetaStub(object):
-    """Missing associated documentation comment in .proto file."""
+class ShopStub(object):
+    """Business logic
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -106,32 +110,38 @@ class MetaStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Login2 = channel.unary_unary(
-                '/Meta/Login2',
+        self.GetLoginReward = channel.unary_unary(
+                '/Shop/GetLoginReward',
                 request_serializer=api__pb2.Empty.SerializeToString,
-                response_deserializer=api__pb2.UserData.FromString,
+                response_deserializer=api__pb2.User.FromString,
                 _registered_method=True)
         self.GetUserData = channel.unary_unary(
-                '/Meta/GetUserData',
+                '/Shop/GetUserData',
                 request_serializer=api__pb2.Empty.SerializeToString,
-                response_deserializer=api__pb2.UserData.FromString,
+                response_deserializer=api__pb2.User.FromString,
                 _registered_method=True)
         self.GetShopItems = channel.unary_unary(
-                '/Meta/GetShopItems',
+                '/Shop/GetShopItems',
                 request_serializer=api__pb2.Empty.SerializeToString,
                 response_deserializer=api__pb2.ItemsList.FromString,
                 _registered_method=True)
         self.BuyItem = channel.unary_unary(
-                '/Meta/BuyItem',
+                '/Shop/BuyItem',
                 request_serializer=api__pb2.BuyItemReq.SerializeToString,
-                response_deserializer=api__pb2.Empty.FromString,
+                response_deserializer=api__pb2.User.FromString,
+                _registered_method=True)
+        self.SellItem = channel.unary_unary(
+                '/Shop/SellItem',
+                request_serializer=api__pb2.SellItemReq.SerializeToString,
+                response_deserializer=api__pb2.User.FromString,
                 _registered_method=True)
 
 
-class MetaServicer(object):
-    """Missing associated documentation comment in .proto file."""
+class ShopServicer(object):
+    """Business logic
+    """
 
-    def Login2(self, request, context):
+    def GetLoginReward(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -155,18 +165,24 @@ class MetaServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def SellItem(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
 
-def add_MetaServicer_to_server(servicer, server):
+
+def add_ShopServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Login2': grpc.unary_unary_rpc_method_handler(
-                    servicer.Login2,
+            'GetLoginReward': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetLoginReward,
                     request_deserializer=api__pb2.Empty.FromString,
-                    response_serializer=api__pb2.UserData.SerializeToString,
+                    response_serializer=api__pb2.User.SerializeToString,
             ),
             'GetUserData': grpc.unary_unary_rpc_method_handler(
                     servicer.GetUserData,
                     request_deserializer=api__pb2.Empty.FromString,
-                    response_serializer=api__pb2.UserData.SerializeToString,
+                    response_serializer=api__pb2.User.SerializeToString,
             ),
             'GetShopItems': grpc.unary_unary_rpc_method_handler(
                     servicer.GetShopItems,
@@ -176,21 +192,27 @@ def add_MetaServicer_to_server(servicer, server):
             'BuyItem': grpc.unary_unary_rpc_method_handler(
                     servicer.BuyItem,
                     request_deserializer=api__pb2.BuyItemReq.FromString,
-                    response_serializer=api__pb2.Empty.SerializeToString,
+                    response_serializer=api__pb2.User.SerializeToString,
+            ),
+            'SellItem': grpc.unary_unary_rpc_method_handler(
+                    servicer.SellItem,
+                    request_deserializer=api__pb2.SellItemReq.FromString,
+                    response_serializer=api__pb2.User.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'Meta', rpc_method_handlers)
+            'Shop', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('Meta', rpc_method_handlers)
+    server.add_registered_method_handlers('Shop', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class Meta(object):
-    """Missing associated documentation comment in .proto file."""
+class Shop(object):
+    """Business logic
+    """
 
     @staticmethod
-    def Login2(request,
+    def GetLoginReward(request,
             target,
             options=(),
             channel_credentials=None,
@@ -203,9 +225,9 @@ class Meta(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Meta/Login2',
+            '/Shop/GetLoginReward',
             api__pb2.Empty.SerializeToString,
-            api__pb2.UserData.FromString,
+            api__pb2.User.FromString,
             options,
             channel_credentials,
             insecure,
@@ -230,9 +252,9 @@ class Meta(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Meta/GetUserData',
+            '/Shop/GetUserData',
             api__pb2.Empty.SerializeToString,
-            api__pb2.UserData.FromString,
+            api__pb2.User.FromString,
             options,
             channel_credentials,
             insecure,
@@ -257,7 +279,7 @@ class Meta(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Meta/GetShopItems',
+            '/Shop/GetShopItems',
             api__pb2.Empty.SerializeToString,
             api__pb2.ItemsList.FromString,
             options,
@@ -284,9 +306,36 @@ class Meta(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/Meta/BuyItem',
+            '/Shop/BuyItem',
             api__pb2.BuyItemReq.SerializeToString,
-            api__pb2.Empty.FromString,
+            api__pb2.User.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SellItem(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/Shop/SellItem',
+            api__pb2.SellItemReq.SerializeToString,
+            api__pb2.User.FromString,
             options,
             channel_credentials,
             insecure,

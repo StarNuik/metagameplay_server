@@ -2,6 +2,7 @@ import argparse
 import collections
 import logging
 from logging import Logger
+from typing import Any
 from dependency_injector import providers, containers
 from dependency_injector.providers import Callable
 from dependency_injector.wiring import inject, Provide
@@ -32,37 +33,101 @@ class SessionRepo:
 		path = Path(SESSION_FILE_PATH)
 		path.unlink(missing_ok = True)
 
+class ClientBase:
+	def __init__(self, logger: Logger):
+		self.log = logger
+		# self.class_name = __class__.__name__
+
+	def log_grpc(self, call, req, caller) -> Any:
+		class_name = __class__.__name__
+		caller_name = caller.__name__
+
+		self.log.info(f"{class_name}.{caller_name} request:\n{req}")
+
+		resp = call(req)
+
+		self.log.info(f"{class_name}.{caller_name} response:\n{resp}")
+
+		return resp
+
+class AuthClient(ClientBase):
+	def __init__(self,
+		auth_api: api.AuthStub,
+		logger: Logger,
+	):
+		super().__init__(logger)
+		self.auth = auth_api
+	
+	def Login(self, req: dto.LoginReq) -> dto.UserSession:
+		return self.log_grpc(
+			self.auth.Login, req, self.Login,
+		)
+	
+class ShopClient(ClientBase):
+	def __init__(self,
+		shop_api: api.ShopStub,
+		logger: Logger,
+	):
+		super().__init__(logger)
+		self.shop = shop_api
+	
+	def GetLoginReward(self) -> dto.User:
+		return self.log_grpc(
+			self.shop.GetLoginReward, dto.Empty(), self.GetLoginReward,
+		)
+
+	def GetUserData(self) -> dto.User:
+		return self.log_grpc(
+			self.shop.GetUserData, dto.Empty(), self.GetUserData,
+		)
+	
+	def GetShopItems(self) -> dto.ItemsList:
+		return self.log_grpc(
+			self.shop.GetShopItems, dto.Empty(), self.GetShopItems,
+		)
+	
+	def BuyItem(self, req: dto.BuyItemReq) -> dto.User:
+		return self.log_grpc(
+			self.shop.BuyItem, req, self.BuyItem,
+		)
+	
+	def SellItem(self, req: dto.SellItemReq) -> dto.User:
+		return self.log_grpc(
+			self.shop.SellItem, req, self.SellItem,
+		)
+
+
 class ClientUsecase:
 	def __init__(self,
 		logger: Logger,
-		meta_api: api.MetaStub,
-		auth_api: api.AuthStub,
+		shop_client: ShopClient,
+		auth_client: AuthClient,
 		session_repo: SessionRepo,
 	):
 		self.log = logger
-		self.auth = auth_api
-		self.meta = meta_api
+		self.auth = auth_client
+		self.shop = shop_client
 		self.session = session_repo
 	
 	def login(self, args):
 		req = dto.LoginReq(username = args.username)
+		
 		resp: dto.UserSession = self.auth.Login(req)
-		self.session.set_token(resp.session_token)
-		self.log.info(f"login: {self.session.get_token()}")
 
-		resp = self.meta.Login2(dto.Empty())
-		self.log.info(f"user data: {resp}")
+		self.session.set_token(resp.session_token)
+
+		resp = self.shop.GetLoginReward()
 
 	def logout(self, _):
 		self.session.delete_token()
-		self.log.info("logged out")
 
-	def get_shop_items(self, args):
-		resp: dto.ItemsList = self.meta.GetShopItems(dto.Empty())
-		self.log.info(f"all items: {resp}")
+	def get_shop_items(self, _):
+		resp: dto.ItemsList = self.shop.GetShopItems()
 
 	def buy_item(self, args):
-		pass
+		req = dto.BuyItemReq(item_name = args.item_name)
+		resp: dto.User = self.shop.BuyItem(req)
+
 	def sell_item(self, args):
 		pass
 
@@ -124,17 +189,27 @@ class Container(containers.DeclarativeContainer):
 		api.AuthStub,
 		grpc_channel,
 	)
-	meta_api = providers.Singleton(
-		api.MetaStub,
+	shop_api = providers.Singleton(
+		api.ShopStub,
 		grpc_authorized_channel,
 	)
 
 	# business
+	auth_client = providers.Singleton(
+		AuthClient,
+		auth_api = auth_api,
+		logger = logger,
+	)
+	shop_client = providers.Singleton(
+		ShopClient,
+		shop_api = shop_api,
+		logger = logger,
+	)
 	usecase = providers.Singleton(
 		ClientUsecase,
 		logger = logger,
-		meta_api = meta_api,
-		auth_api = auth_api,
+		shop_client = shop_client,
+		auth_client = auth_client,
 		session_repo = session_repo,
 	)
 
@@ -148,6 +223,7 @@ def create_parser(
 		required = True,
 	)
 
+	# Auth
 	register = subparsers.add_parser(
 		name = "login",
 		help = "use credentials to login",
@@ -156,16 +232,25 @@ def create_parser(
 	register.add_argument("username")
 
 	register = subparsers.add_parser(
+		name = "logout",
+		help = "forget the current user",
+	)
+	register.set_defaults(func = usecase.logout)
+
+	# Shop
+	register = subparsers.add_parser(
 		name = "shop_items",
 		help = "list all items in shop",
 	)
 	register.set_defaults(func = usecase.get_shop_items)
 
 	register = subparsers.add_parser(
-		name = "logout",
-		help = "forget the current user",
+		name = "buy",
+		help = "use credits to buy an item",
 	)
-	register.set_defaults(func = usecase.logout)
+	register.set_defaults(func = usecase.buy_item)
+	register.add_argument("item_name")
+	
 	return parser
 
 def main():
