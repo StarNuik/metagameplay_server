@@ -38,16 +38,6 @@ class ItemsList(_message.Message):
     items: _containers.RepeatedCompositeFieldContainer[Item]
     def __init__(self, items: _Optional[_Iterable[_Union[Item, _Mapping]]] = ...) -> None: ...
 
-class User(_message.Message):
-    __slots__ = ("username", "credits", "items")
-    USERNAME_FIELD_NUMBER: _ClassVar[int]
-    CREDITS_FIELD_NUMBER: _ClassVar[int]
-    ITEMS_FIELD_NUMBER: _ClassVar[int]
-    username: str
-    credits: int
-    items: _containers.RepeatedCompositeFieldContainer[Item]
-    def __init__(self, username: _Optional[str] = ..., credits: _Optional[int] = ..., items: _Optional[_Iterable[_Union[Item, _Mapping]]] = ...) -> None: ...
-
 class Item(_message.Message):
     __slots__ = ("name", "price")
     NAME_FIELD_NUMBER: _ClassVar[int]
@@ -55,3 +45,21 @@ class Item(_message.Message):
     name: str
     price: int
     def __init__(self, name: _Optional[str] = ..., price: _Optional[int] = ...) -> None: ...
+
+class User(_message.Message):
+    __slots__ = ("username", "credits", "items")
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
+    CREDITS_FIELD_NUMBER: _ClassVar[int]
+    ITEMS_FIELD_NUMBER: _ClassVar[int]
+    username: str
+    credits: int
+    items: _containers.RepeatedCompositeFieldContainer[OwnedItem]
+    def __init__(self, username: _Optional[str] = ..., credits: _Optional[int] = ..., items: _Optional[_Iterable[_Union[OwnedItem, _Mapping]]] = ...) -> None: ...
+
+class OwnedItem(_message.Message):
+    __slots__ = ("name", "quantity")
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    QUANTITY_FIELD_NUMBER: _ClassVar[int]
+    name: str
+    quantity: int
+    def __init__(self, name: _Optional[str] = ..., quantity: _Optional[int] = ...) -> None: ...

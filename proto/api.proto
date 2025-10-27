@@ -33,13 +33,20 @@ message ItemsList {
 	repeated Item items = 1;
 }
 
-message User {
-	optional string username = 1;
-	optional int32 credits = 2;
-	repeated Item items = 3;
-}
-
 message Item {
 	optional string name = 1;
 	optional int64 price = 2;
 }
+
+message User {
+	optional string username = 1;
+	optional int32 credits = 2;
+	repeated OwnedItem items = 3;
+}
+
+message OwnedItem {
+	optional string name = 1;
+	optional int64 quantity = 2;
+}
+
+

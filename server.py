@@ -66,10 +66,18 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 	) -> dto.User:
 		username = user_session.username
 		user = db.get_user(username)
+		items = []
+		for _, ownership in user.owned_items.items():
+			# TODO: THIS IS kinda AWFUL now
+			items.append(dto.OwnedItem(
+				name = ownership.item_name,
+				quantity = ownership.quantity,
+			))
+		
 		user = dto.User(
 			username = username,
 			credits = user.balance,
-			items = [],
+			items = items,
 		)
 		return user
 

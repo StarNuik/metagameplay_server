@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tapi.proto\"\x07\n\x05\x45mpty\".\n\x08LoginReq\x12\x15\n\x08username\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x0b\n\t_username\";\n\x0bUserSession\x12\x1a\n\rsession_token\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x10\n\x0e_session_token\"2\n\nBuyItemReq\x12\x16\n\titem_name\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_item_name\"\r\n\x0bSellItemReq\"!\n\tItemsList\x12\x14\n\x05items\x18\x01 \x03(\x0b\x32\x05.Item\"b\n\x04User\x12\x15\n\x08username\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x14\n\x07\x63redits\x18\x02 \x01(\x05H\x01\x88\x01\x01\x12\x14\n\x05items\x18\x03 \x03(\x0b\x32\x05.ItemB\x0b\n\t_usernameB\n\n\x08_credits\"@\n\x04Item\x12\x11\n\x04name\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x12\n\x05price\x18\x02 \x01(\x03H\x01\x88\x01\x01\x42\x07\n\x05_nameB\x08\n\x06_price2*\n\x04\x41uth\x12\"\n\x05Login\x12\t.LoginReq\x1a\x0c.UserSession\"\x00\x32\xb3\x01\n\x04Shop\x12!\n\x0eGetLoginReward\x12\x06.Empty\x1a\x05.User\"\x00\x12\x1e\n\x0bGetUserData\x12\x06.Empty\x1a\x05.User\"\x00\x12$\n\x0cGetShopItems\x12\x06.Empty\x1a\n.ItemsList\"\x00\x12\x1f\n\x07\x42uyItem\x12\x0b.BuyItemReq\x1a\x05.User\"\x00\x12!\n\x08SellItem\x12\x0c.SellItemReq\x1a\x05.User\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tapi.proto\"\x07\n\x05\x45mpty\".\n\x08LoginReq\x12\x15\n\x08username\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x0b\n\t_username\";\n\x0bUserSession\x12\x1a\n\rsession_token\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x10\n\x0e_session_token\"2\n\nBuyItemReq\x12\x16\n\titem_name\x18\x01 \x01(\tH\x00\x88\x01\x01\x42\x0c\n\n_item_name\"\r\n\x0bSellItemReq\"!\n\tItemsList\x12\x14\n\x05items\x18\x01 \x03(\x0b\x32\x05.Item\"@\n\x04Item\x12\x11\n\x04name\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x12\n\x05price\x18\x02 \x01(\x03H\x01\x88\x01\x01\x42\x07\n\x05_nameB\x08\n\x06_price\"g\n\x04User\x12\x15\n\x08username\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x14\n\x07\x63redits\x18\x02 \x01(\x05H\x01\x88\x01\x01\x12\x19\n\x05items\x18\x03 \x03(\x0b\x32\n.OwnedItemB\x0b\n\t_usernameB\n\n\x08_credits\"K\n\tOwnedItem\x12\x11\n\x04name\x18\x01 \x01(\tH\x00\x88\x01\x01\x12\x15\n\x08quantity\x18\x02 \x01(\x03H\x01\x88\x01\x01\x42\x07\n\x05_nameB\x0b\n\t_quantity2*\n\x04\x41uth\x12\"\n\x05Login\x12\t.LoginReq\x1a\x0c.UserSession\"\x00\x32\xb3\x01\n\x04Shop\x12!\n\x0eGetLoginReward\x12\x06.Empty\x1a\x05.User\"\x00\x12\x1e\n\x0bGetUserData\x12\x06.Empty\x1a\x05.User\"\x00\x12$\n\x0cGetShopItems\x12\x06.Empty\x1a\n.ItemsList\"\x00\x12\x1f\n\x07\x42uyItem\x12\x0b.BuyItemReq\x1a\x05.User\"\x00\x12!\n\x08SellItem\x12\x0c.SellItemReq\x1a\x05.User\"\x00\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -43,12 +43,14 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_SELLITEMREQ']._serialized_end=196
   _globals['_ITEMSLIST']._serialized_start=198
   _globals['_ITEMSLIST']._serialized_end=231
-  _globals['_USER']._serialized_start=233
-  _globals['_USER']._serialized_end=331
-  _globals['_ITEM']._serialized_start=333
-  _globals['_ITEM']._serialized_end=397
-  _globals['_AUTH']._serialized_start=399
-  _globals['_AUTH']._serialized_end=441
-  _globals['_SHOP']._serialized_start=444
-  _globals['_SHOP']._serialized_end=623
+  _globals['_ITEM']._serialized_start=233
+  _globals['_ITEM']._serialized_end=297
+  _globals['_USER']._serialized_start=299
+  _globals['_USER']._serialized_end=402
+  _globals['_OWNEDITEM']._serialized_start=404
+  _globals['_OWNEDITEM']._serialized_end=479
+  _globals['_AUTH']._serialized_start=481
+  _globals['_AUTH']._serialized_end=523
+  _globals['_SHOP']._serialized_start=526
+  _globals['_SHOP']._serialized_end=705
 # @@protoc_insertion_point(module_scope)

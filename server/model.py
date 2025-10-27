@@ -14,6 +14,7 @@ class User(_Table):
 	username: Mapped[str] = mapped_column(Text, primary_key = True)
 	balance: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
 
+	# TODO: remove rel
 	owned_items: Mapped[dict[str, "ItemOwnership"]] = relationship(
 		back_populates = "owner",
 		collection_class = attribute_keyed_dict("item_name"),
@@ -39,8 +40,12 @@ class ItemOwnership(_Table):
 	item_name: Mapped[str] = mapped_column(ForeignKey("items.name"))
 	owner_username: Mapped[str] = mapped_column(ForeignKey("users.username"))
 
+	# TODO: remove rel
 	item: Mapped["Item"] = relationship()
 	owner: Mapped["User"] = relationship(back_populates = "owned_items")
+
+	def __str__(self):
+		return f"{{id: {self.id}, item_name: {self.item_name}, owner_username: {self.owner_username}, quantity: {self.quantity}}}"
 
 def install_model(engine: Engine):
 	_Table.metadata.create_all(engine)
@@ -99,6 +104,7 @@ class DbSession:
 		self.session.execute(stmt)
 	
 	def add_item_ownership(self, user: User, item: Item, amount: int):
+		# TODO: these are implicit sql calls
 		if not item.name in user.owned_items:
 			user.owned_items[item.name] = ItemOwnership(
 				quantity = amount,
