@@ -29,8 +29,10 @@ class BuyItemReq(_message.Message):
     def __init__(self, item_name: _Optional[str] = ...) -> None: ...
 
 class SellItemReq(_message.Message):
-    __slots__ = ()
-    def __init__(self) -> None: ...
+    __slots__ = ("item_name",)
+    ITEM_NAME_FIELD_NUMBER: _ClassVar[int]
+    item_name: str
+    def __init__(self, item_name: _Optional[str] = ...) -> None: ...
 
 class ItemsList(_message.Message):
     __slots__ = ("items",)

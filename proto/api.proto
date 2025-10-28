@@ -27,7 +27,10 @@ service Shop {
 message BuyItemReq {
 	optional string item_name = 1;
 }
-message SellItemReq {}
+
+message SellItemReq {
+	optional string item_name = 1;
+}
 
 message ItemsList {
 	repeated Item items = 1;

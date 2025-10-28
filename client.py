@@ -129,7 +129,8 @@ class ClientUsecase:
 		resp: dto.User = self.shop.BuyItem(req)
 
 	def sell_item(self, args):
-		pass
+		req = dto.SellItemReq(item_name = args.item_name)
+		resp: dto.User = self.shop.SellItem(req)
 
 JWT_HEADER_NAME = "session_token"
 
@@ -249,6 +250,13 @@ def create_parser(
 		help = "use credits to buy an item",
 	)
 	register.set_defaults(func = usecase.buy_item)
+	register.add_argument("item_name")
+
+	register = subparsers.add_parser(
+		name = "sell",
+		help = "sell an item to receive back spent credits",
+	)
+	register.set_defaults(func = usecase.sell_item)
 	register.add_argument("item_name")
 	
 	return parser

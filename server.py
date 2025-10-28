@@ -116,9 +116,9 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 				), items))
 			return resp
 
-	def BuyItem(self, request: dto.BuyItemReq, context: grpc.ServicerContext):
+	def BuyItem(self, req: dto.BuyItemReq, context: grpc.ServicerContext):
 		with self.db_session() as db, db.begin():
-			item = db.get_item(request.item_name)
+			item = db.get_item(req.item_name)
 			if item == None:
 				context.abort(grpc.StatusCode.INVALID_ARGUMENT, "item doesn't exist")
 				return
@@ -135,8 +135,10 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 			db.add_item_ownership(user, item, 1)
 
 			return self.__get_user_data(db, user_session)
-			context.abort(grpc.StatusCode.FAILED_PRECONDITION, "message")
-			# return super().BuyItem(request, context)
+
+	def SellItem(self, req: dto.SellItemReq, context: grpc.ServicerContext):
+		self.log.info(req)
+		return context.abort(grpc.StatusCode.UNIMPLEMENTED, "sell item")
 
 SQLITE_PATH = "./.server.db"
 
@@ -201,7 +203,9 @@ def run(container: Container):
 	log = container.logger()
 
 	server = grpc.server(
-		futures.ThreadPoolExecutor(max_workers = container.config.server.workers()),
+		futures.ThreadPoolExecutor(
+			max_workers = container.config.server.workers()
+		),
 		interceptors = [
 			container.logging_interceptor(),
 			AuthInterceptor(),
