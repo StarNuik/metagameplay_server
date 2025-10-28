@@ -36,7 +36,6 @@ class SessionRepo:
 class ClientBase:
 	def __init__(self, logger: Logger):
 		self.log = logger
-		# self.class_name = __class__.__name__
 
 	def log_grpc(self, call, req, caller) -> Any:
 		class_name = __class__.__name__
@@ -261,6 +260,14 @@ def create_parser(
 	
 	return parser
 
+@inject
+def error_handling(call, log: Logger = Provide[Container.logger]):
+	try:
+		call()
+	except grpc.RpcError as e:
+		log.info(f" grpc error: {e.code().value[1], e.details()}")
+	pass
+
 def main():
 	logging.basicConfig(
 		level=logging.INFO,
@@ -272,10 +279,7 @@ def main():
 	parser = create_parser()
 	args = parser.parse_args()
 
-	try:
-		args.func(args)
-	except grpc.RpcError as e:
-		container.logger().info(e)
+	error_handling(lambda : args.func(args))
 
 	container.shutdown_resources()
 
