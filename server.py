@@ -11,12 +11,17 @@ from sqlalchemy.orm import Session
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 from logging import Logger
-
-
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider, Span, Tracer
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.instrumentation.grpc._server import OpenTelemetryServerInterceptor
 from api import api_pb2 as dto
 from api import api_pb2_grpc as api
 from server import *
 from server import jwt_session as jwts
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 class AuthInterceptor(grpc.ServerInterceptor):
 	def __init__(self):
@@ -37,18 +42,17 @@ class AuthInterceptor(grpc.ServerInterceptor):
 		resp = continuation(handler_call_details)
 		
 		return resp
+	
+
 
 class LoggingInterceptor(grpc.ServerInterceptor):
-	def __init__(self, logger: Logger):
-		self.log = logger
+	def __init__(self, tracer_span_factory: providers.Callable[Span]):
+		self.span = tracer_span_factory
 	
 	def intercept_service(self, continuation, handler_call_details):
-		resp = continuation(handler_call_details)
-
-		msg = "success" if resp != None else "fail"
-		self.log.info(f"{msg} {handler_call_details.method}")
-		
-		return resp
+		with self.span(name = "meow"):
+			resp = continuation(handler_call_details)
+			return resp
 
 class Servicer(api.AuthServicer, api.ShopServicer):
 	def __init__(self,
@@ -163,6 +167,9 @@ def connect_database(item_list) -> Engine:
 	engine = create_engine(f"sqlite:///{SQLITE_PATH}")
 	install_model(engine)
 	migrate_items(engine, item_list)
+	SQLAlchemyInstrumentor().instrument(
+		engine = engine,
+	)
 	return engine
 
 def items_from_config(items) -> list[Item]:
@@ -171,6 +178,33 @@ def items_from_config(items) -> list[Item]:
 				price = item["price"],
 	), items)
 
+def connect_tracer() -> Tracer:
+	resource = Resource(
+		attributes={
+			"service.name": "meow",
+		}
+	)
+	provider = TracerProvider(
+		resource = resource
+	)
+	trace.set_tracer_provider(provider)
+
+	exporter = BatchSpanProcessor(OTLPSpanExporter())
+
+	trace.get_tracer_provider().add_span_processor(exporter)
+
+	tracer = trace.get_tracer(__name__)
+
+	return tracer
+
+def get_tracer_span(tracer: Tracer, name: str) -> Span:
+	return tracer.start_as_current_span(name)
+
+def get_session(database_client: Engine, tracer: Tracer) -> Session:
+	session = Session(database_client)
+	parent_span = trace.get_current_span()
+	return session
+
 class Container(containers.DeclarativeContainer):
 	config = providers.Configuration(json_files = ["./config.json"])
 
@@ -178,11 +212,22 @@ class Container(containers.DeclarativeContainer):
 	logger = providers.Singleton(
 		logging.getLogger,
 	)
+	tracer = providers.Singleton(
+		connect_tracer,
+	)
+	tracer_span_factory = providers.Callable(
+		get_tracer_span,
+		tracer = tracer,
+	)
 
 	# grpc
 	logging_interceptor = providers.Singleton(
 		LoggingInterceptor,
-		logger = logger,
+		tracer_span_factory = tracer_span_factory.provider,
+	)
+	otlp_interceptor = providers.Singleton(
+		OpenTelemetryServerInterceptor,
+		tracer,
 	)
 
 	# Database
@@ -194,9 +239,14 @@ class Container(containers.DeclarativeContainer):
 		connect_database,
 		item_list = item_list,
 	)
+	# session_factory = providers.Factory(
+	# 	Session,
+	# 	database_client,
+	# )
 	session_factory = providers.Factory(
-		Session,
-		database_client,
+		get_session,
+		database_client = database_client,
+		tracer = tracer,
 	)
 	db_session = providers.Factory(
 		DbSession,
@@ -224,8 +274,8 @@ def run(container: Container):
 			max_workers = container.config.server.workers()
 		),
 		interceptors = [
-			container.logging_interceptor(),
-			AuthInterceptor(),
+			container.otlp_interceptor(),
+			AuthInterceptor(), # TODO
 		],
 	)
 	server.add_insecure_port(f"[::]:{container.config.server.port()}")
