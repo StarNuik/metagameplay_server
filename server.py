@@ -17,6 +17,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.instrumentation.grpc._server import OpenTelemetryServerInterceptor
+from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
 from api import api_pb2 as dto
 from api import api_pb2_grpc as api
 from server import *
@@ -25,7 +26,7 @@ from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 class AuthInterceptor(grpc.ServerInterceptor):
 	def __init__(self):
-		def abort(_, context):
+		def abort(_, context: ServicerContext):
 			context.abort(grpc.StatusCode.UNAUTHENTICATED, "Invalid session token")
 
 		self.abort_handler = grpc.unary_unary_rpc_method_handler(abort)
@@ -59,34 +60,38 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 		logger: Logger,
 		db_session_factory: providers.Callable[DbSession],
 		reward_amount_factory: providers.Callable[int],
+		tracer_span_factory: providers.Callable[Span],
 	):
 		self.log = logger
 		self.db_session = db_session_factory
 		self.reward_amount = reward_amount_factory
+		self.span = tracer_span_factory
 
 	def __get_user_data(self,
 		db: DbSession,
 		user_session: jwts.Session
 	) -> dto.User:
-		username = user_session.username
-		user = db.get_user(username)
-		items = []
-		for _, ownership in user.owned_items.items():
-			if ownership.quantity <= 0:
-				continue
+		with self.span("get_user_data") as span:
+			username = user_session.username
+			user = db.get_user(username)
+			items = []
+			for _, ownership in user.owned_items.items():
+				if ownership.quantity <= 0:
+					continue
+				
+				# TODO: this is KINDA awful NOW that I don't pull data in a loop
+				items.append(dto.OwnedItem(
+					name = ownership.item_name,
+					quantity = ownership.quantity,
+				))
 			
-			# TODO: this is KINDA awful NOW that I don't pull data in a loop
-			items.append(dto.OwnedItem(
-				name = ownership.item_name,
-				quantity = ownership.quantity,
-			))
-		
-		user = dto.User(
-			username = username,
-			credits = user.balance,
-			items = items,
-		)
-		return user
+			user = dto.User(
+				username = username,
+				credits = user.balance,
+				items = items,
+			)
+			span.add_event("done")
+			return user
 
 	def Login(self, req: dto.LoginReq, context):
 		with self.db_session() as db, db.begin():
@@ -121,7 +126,7 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 				), items))
 			return resp
 
-	def BuyItem(self, req: dto.BuyItemReq, context: grpc.ServicerContext):
+	def BuyItem(self, req: dto.BuyItemReq, context: ServicerContext):
 		with self.db_session() as db, db.begin():
 			item = db.get_item(req.item_name)
 			if item == None:
@@ -141,7 +146,7 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 
 			return self.__get_user_data(db, user_session)
 
-	def SellItem(self, req: dto.SellItemReq, context: grpc.ServicerContext):
+	def SellItem(self, req: dto.SellItemReq, context: ServicerContext):
 		with self.db_session() as db, db.begin():
 			item = db.get_item(req.item_name)
 			if item == None:
@@ -197,13 +202,9 @@ def connect_tracer() -> Tracer:
 
 	return tracer
 
-def get_tracer_span(tracer: Tracer, name: str) -> Span:
+def get_tracer_span(tracer: Tracer):
+	return lambda name : tracer.start_as_current_span(name)
 	return tracer.start_as_current_span(name)
-
-def get_session(database_client: Engine, tracer: Tracer) -> Session:
-	session = Session(database_client)
-	parent_span = trace.get_current_span()
-	return session
 
 class Container(containers.DeclarativeContainer):
 	config = providers.Configuration(json_files = ["./config.json"])
@@ -215,16 +216,12 @@ class Container(containers.DeclarativeContainer):
 	tracer = providers.Singleton(
 		connect_tracer,
 	)
-	tracer_span_factory = providers.Callable(
+	tracer_span_factory = providers.Factory(
 		get_tracer_span,
 		tracer = tracer,
 	)
 
 	# grpc
-	logging_interceptor = providers.Singleton(
-		LoggingInterceptor,
-		tracer_span_factory = tracer_span_factory.provider,
-	)
 	otlp_interceptor = providers.Singleton(
 		OpenTelemetryServerInterceptor,
 		tracer,
@@ -239,18 +236,14 @@ class Container(containers.DeclarativeContainer):
 		connect_database,
 		item_list = item_list,
 	)
-	# session_factory = providers.Factory(
-	# 	Session,
-	# 	database_client,
-	# )
 	session_factory = providers.Factory(
-		get_session,
-		database_client = database_client,
-		tracer = tracer,
+		Session,
+		database_client,
 	)
 	db_session = providers.Factory(
 		DbSession,
 		session_factory = session_factory.provider,
+		tracer_span_factory = tracer_span_factory,
 	)
 
 	# business
@@ -264,6 +257,7 @@ class Container(containers.DeclarativeContainer):
 		logger = logger,
 		db_session_factory = db_session.provider,
 		reward_amount_factory = reward_amount_factory.provider,
+		tracer_span_factory = tracer_span_factory,
 	)
 
 def run(container: Container):

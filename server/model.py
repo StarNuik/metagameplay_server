@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import Text, Integer, BigInteger, Column, Identity, ForeignKey, Engine, select, update
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session, attribute_keyed_dict
 from dependency_injector import providers
+from opentelemetry.sdk.trace import Span
 
 class _Table(DeclarativeBase):
 	pass
@@ -61,16 +62,19 @@ def migrate_items(engine: Engine, item_list: list[Item]):
 class DbSession:
 	def __init__(self,
 		session_factory: providers.Callable[Session],
+		tracer_span_factory: providers.Callable[Span]
 	):
 		self.session = session_factory()
+		self.span = tracer_span_factory("db_session")
 
 	def __enter__(self):
-		self.session = self.session.__enter__()
+		self.session.__enter__()
+		self.span.__enter__()
 		return self
 	
 	def __exit__(self, type_, value, traceback):
 		self.session.__exit__(type_, value, traceback)
-		self.session = None
+		self.span.__exit__(type_, value, traceback)
 
 	def begin(self):
 		return self.session.begin()
