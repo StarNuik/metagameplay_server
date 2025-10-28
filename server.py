@@ -68,7 +68,10 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 		user = db.get_user(username)
 		items = []
 		for _, ownership in user.owned_items.items():
-			# TODO: THIS IS kinda AWFUL now
+			if ownership.quantity <= 0:
+				continue
+			
+			# TODO: this is KINDA awful NOW that I don't pull data in a loop
 			items.append(dto.OwnedItem(
 				name = ownership.item_name,
 				quantity = ownership.quantity,
@@ -83,19 +86,18 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 
 	def Login(self, req: dto.LoginReq, context):
 		with self.db_session() as db, db.begin():
+			user_session = jwts.Session(req.username)
 			if not db.user_exists(req.username):
 				db.create_user(req.username)
 		
-		user_session = jwts.Session(req.username)
 		jwt = jwts.pack(user_session)
 		return dto.UserSession(session_token = jwt)
 
 	def GetLoginReward(self, _, context):
 		with self.db_session() as db, db.begin():
-			user_session = jwts.from_context(context)
-
-			username = user_session.username
 			reward = self.reward_amount()
+			user_session = jwts.from_context(context)
+			username = user_session.username
 			db.add_credits(username, reward)
 		
 			return self.__get_user_data(db, user_session)
@@ -103,7 +105,6 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 	def GetUserData(self, _, context):
 		with self.db_session() as db:
 			user_session = jwts.from_context(context)
-			
 			return self.__get_user_data(db, user_session)
 
 	def GetShopItems(self, _, context):
@@ -137,8 +138,24 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 			return self.__get_user_data(db, user_session)
 
 	def SellItem(self, req: dto.SellItemReq, context: grpc.ServicerContext):
-		self.log.info(req)
-		return context.abort(grpc.StatusCode.UNIMPLEMENTED, "sell item")
+		with self.db_session() as db, db.begin():
+			item = db.get_item(req.item_name)
+			if item == None:
+				context.abort(grpc.StatusCode.INVALID_ARGUMENT, "item doesn't exist")
+				return
+			
+			user_session = jwts.from_context(context)
+			user = db.get_user(user_session.username)
+			if not item.name in user.owned_items or user.owned_items[item.name].quantity <= 0:
+				context.abort(grpc.StatusCode.FAILED_PRECONDITION, "user doesn't own this item")
+				return
+			
+			self.log.info(f"selling item: {user.username, item.name}")
+
+			db.add_credits(user.username, item.price)
+			db.add_item_ownership(user, item, -1)
+
+			return self.__get_user_data(db, user_session)
 
 SQLITE_PATH = "./.server.db"
 
