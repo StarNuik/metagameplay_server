@@ -47,6 +47,7 @@ def create_interceptors(
 ) -> list[ServerInterceptor]:
 	return [
 		OpenTelemetryServerInterceptor(tracer),
+		ExceptionInterceptor(),
 		AuthInterceptor(auth_usecase),
 	]
 
@@ -149,12 +150,17 @@ class Container(containers.DeclarativeContainer):
 	auth_usecase = providers.Singleton(
 		AuthUsecase,
 	)
+	shop_usecase = providers.Singleton(
+		ShopUsecase,
+		reward_amount_factory = reward_amount_factory.provider,
+	)
 	servicer = providers.Singleton(
 		Servicer,
 		logger = logger,
 		db_session_factory = db_session.provider,
-		reward_amount_factory = reward_amount_factory.provider,
 		tracer_span_factory = tracer_span_factory,
+		auth_usecase = auth_usecase,
+		shop_usecase = shop_usecase,
 	)
 
 	# grpc

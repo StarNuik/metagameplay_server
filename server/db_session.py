@@ -75,7 +75,7 @@ class DbSession(DbSessionBase):
 			.values(quantity = ItemOwnership.quantity + amount)
 		self.session.execute(stmt)
 
-	def get_all_ownerships(self, username: str) -> List[ItemOwnership]:
+	def get_all_ownerships(self, username: str) -> list[ItemOwnership]:
 		stmt = select(ItemOwnership) \
 			.where(ItemOwnership.owner_username == username)
 		return self.session.execute(stmt).scalars().all()
