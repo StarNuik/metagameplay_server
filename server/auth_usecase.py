@@ -13,7 +13,7 @@ class AuthUsecase:
 		username = req.username
 		
 		if not username:
-			raise exc.InvalidArgumentError("username is empty")
+			raise exc.EmptyUsernameError()
 
 		if not db.user_exists(username):
 			db.create_user(username)
@@ -21,14 +21,14 @@ class AuthUsecase:
 		user_session = jwts.Session(username)
 		return user_session
 	
-	def is_authorized(self, method: str, user_session: jwts.Session) -> bool:
+	def authorization_error(self, method: str, user_session: jwts.Session) -> exc.UsecaseError:
 		if not self.is_protected_method(method):
-			return True
+			return None
 		
-		if self.is_valid_session(user_session):
-			return True
+		if not self.is_valid_session(user_session):
+			return exc.InvalidSessionError()
 		
-		return False
+		return None
 
 	def is_protected_method(self, method: str) -> bool:
 		path = Path(method)

@@ -8,29 +8,31 @@ from server import exc
 
 class AuthInterceptor(grpc.ServerInterceptor):
 	def __init__(self, auth_usecase: AuthUsecase):
-		self.usecase = auth_usecase
+		self.auth = auth_usecase
 
-		def abort(_, context: ServicerContext):
-			context.abort(grpc.StatusCode.UNAUTHENTICATED, exc.UNAUTHENTICATED_MESSAGE)
-
-		self.abort_handler = grpc.unary_unary_rpc_method_handler(abort)
+	def raise_exc_handler(self, e: Exception):
+		def abort(_, __): raise e
+		handler = grpc.unary_unary_rpc_method_handler(abort)
+		return handler 
 
 	def intercept_service(self, continuation, handler_call_details):
 		user_session = jwts.from_details(handler_call_details)
-		if self.usecase.is_authorized(
+
+		e = self.auth.authorization_error(
 			handler_call_details.method,
-			user_session,
-		):
-			return continuation(handler_call_details)
-		else:
-			return self.abort_handler
+			user_session
+		)
+		if e is not None:
+			return self.raise_exc_handler(e)
+
+		return continuation(handler_call_details)
 
 #SRC https://stackoverflow.com/a/59754982
 from opentelemetry.instrumentation.grpc._server import _wrap_rpc_behavior
 
 class ExceptionInterceptor(grpc.ServerInterceptor):
 	def intercept_service(self, continuation, handler_call_details):
-		def wrapper(behavior, request_streaming, response_streaming):
+		def wrapper(behavior, _, __):
 			def interceptor(request_or_iterator, context: ServicerContext):
 				try:
 					return behavior(request_or_iterator, context)

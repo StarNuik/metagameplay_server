@@ -6,13 +6,15 @@ from opentelemetry.sdk.trace import Span
 
 from . import *
 
+DB_SESSION_TRACE_NAME = "db_session"
+
 class DbSessionBase:
 	def __init__(self,
 		session_factory: providers.Callable[Session],
 		tracer_span_factory: providers.Callable[Span]
 	):
 		self.session = session_factory()
-		self.span = tracer_span_factory("db_session")
+		self.span = tracer_span_factory(DB_SESSION_TRACE_NAME)
 
 	def __enter__(self):
 		self.session.__enter__()

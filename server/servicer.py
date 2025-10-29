@@ -1,29 +1,14 @@
-from json import JSONEncoder
-from pathlib import Path
-import random
-import grpc
-import threading
-import logging
-import signal
-from concurrent import futures
-from sqlalchemy import Engine, create_engine
-from sqlalchemy.orm import Session
-from dependency_injector import containers, providers
-from dependency_injector.wiring import Provide, inject
+from dependency_injector import providers
 from logging import Logger
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider, Span, Tracer
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.instrumentation.grpc._server import OpenTelemetryServerInterceptor
+from opentelemetry.sdk.trace import Span
 from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
 from api import api_pb2 as dto
 from api import api_pb2_grpc as api
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 from server import *
 from server import jwt_session as jwts
+
+GET_USER_TRACE_NAME = "get_user"
 
 class Servicer(api.AuthServicer, api.ShopServicer):
 	def __init__(self,
@@ -48,7 +33,7 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 		with self.db_session() as db, db.begin():
 			user_session = jwts.from_context(context)
 			self.shop.receive_login_reward(db, user_session)
-			with self.span("get_user"):
+			with self.span(GET_USER_TRACE_NAME):
 				return self.shop.get_user(db, user_session)
 
 	def GetShopItems(self, _, __):
@@ -60,7 +45,7 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 			user_session = jwts.from_context(context)
 			self.shop.buy_item(db, req, user_session)
 
-			with self.span("get_user"):
+			with self.span(GET_USER_TRACE_NAME):
 				return self.shop.get_user(db, user_session)
 
 	def SellItem(self, req: dto.SellItemReq, context: ServicerContext):
@@ -68,5 +53,5 @@ class Servicer(api.AuthServicer, api.ShopServicer):
 			user_session = jwts.from_context(context)
 			self.shop.sell_item(db, req, user_session)
 
-			with self.span("get_user"):
+			with self.span(GET_USER_TRACE_NAME):
 				return self.shop.get_user(db, user_session)
