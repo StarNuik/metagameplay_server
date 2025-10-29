@@ -24,34 +24,26 @@ from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 from server import *
 from server import jwt_session as jwts
+from server import exc
+from sqlalchemy.exc import IntegrityError
 
-def run(container: Container):
-	log = container.logger()
+class AuthUsecase:
+	def __init__(self):
+		pass
+	
+	def Login(self, db: DbSession, username: str | None) -> jwts.Session:
+		if username is None:
+			raise exc.InvalidArgumentError("username is empty")
 
-	server = container.grpc_server()
+		if not db.user_exists(username):
+			db.create_user(username)
+		
+		user_session = jwts.Session(username)
+		return user_session
 
-	try:
-		server.start()
-		server.wait_for_termination()
-	except KeyboardInterrupt:
-		log.info("Graceful shutdown")
-	finally:
-		log.info("Waiting for the server to finish")
-		server.stop(5).wait()
-		log.info("All finished, exiting")
-
-def main():
-	logging.basicConfig(
-		level=logging.INFO,
-	)
-
-	container = Container()
-	container.init_resources()
-	container.wire(modules=[__name__])
-
-	run(container)
-
-	container.shutdown_resources()
-
-if __name__ == "__main__":
-	main()
+	def IsProtectedMethod(self, method: str) -> bool:
+		path = Path(method)
+		return not path.parts[1] == "Auth"
+	
+	def IsValidSession(self, user_session: jwts.Session):
+		return user_session is not None
