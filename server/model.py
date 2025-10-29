@@ -1,7 +1,8 @@
 import sqlalchemy
 
+from typing import List
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import Text, Integer, BigInteger, Column, Identity, ForeignKey, Engine, select, update
+from sqlalchemy import Text, Integer, BigInteger, Column, Identity, ForeignKey, Engine, select, update, insert
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, Session, attribute_keyed_dict
 from dependency_injector import providers
 from opentelemetry.sdk.trace import Span
@@ -14,12 +15,6 @@ class User(_Table):
 
 	username: Mapped[str] = mapped_column(Text, primary_key = True)
 	balance: Mapped[int] = mapped_column(Integer, default = 0, nullable = False)
-
-	# TODO: remove rel
-	owned_items: Mapped[dict[str, "ItemOwnership"]] = relationship(
-		back_populates = "owner",
-		collection_class = attribute_keyed_dict("item_name"),
-	)
 
 class Item(_Table):
 	__tablename__ = "items"
@@ -40,10 +35,6 @@ class ItemOwnership(_Table):
 	
 	item_name: Mapped[str] = mapped_column(ForeignKey("items.name"))
 	owner_username: Mapped[str] = mapped_column(ForeignKey("users.username"))
-
-	# TODO: remove rel
-	item: Mapped["Item"] = relationship()
-	owner: Mapped["User"] = relationship(back_populates = "owned_items")
 
 	def __str__(self):
 		return f"{{id: {self.id}, item_name: {self.item_name}, owner_username: {self.owner_username}, quantity: {self.quantity}}}"
@@ -88,7 +79,7 @@ class DbSession:
 		stmt = select(User).where(User.username == username)
 		return self.session.scalars(stmt).one()
 	
-	def get_all_items(self) -> list[Item]:
+	def get_all_items(self) -> List[Item]:
 		stmt = select(Item)
 		return self.session.scalars(stmt).all()
 		
@@ -107,16 +98,30 @@ class DbSession:
 			.values(balance = User.balance + amount)
 		self.session.execute(stmt)
 	
-	def add_item_ownership(self, user: User, item: Item, amount: int):
-		# TODO: these are implicit sql calls
-		if not item.name in user.owned_items:
-			user.owned_items[item.name] = ItemOwnership(
-				quantity = amount,
-				owner_username = user.username,
-				item_name = item.name,
-			)
-		else:
-			user.owned_items[item.name].quantity += amount
+	def get_item_ownership(self, username: str, item_name: str) -> ItemOwnership | None:
+		stmt = select(ItemOwnership) \
+			.where(ItemOwnership.owner_username == username) \
+			.where(ItemOwnership.item_name == item_name)
+		return self.session.scalar(stmt)
+	
+	def create_item_ownership(self, username: str, item_name: str) -> ItemOwnership:
+		stmt = insert(ItemOwnership) \
+			.values(
+				item_name = item_name,
+				owner_username = username,
+			).returning(ItemOwnership)
+		return self.session.execute(stmt).scalar_one()
+
+	def add_to_item_ownership(self, ownership_id: int, amount: int):
+		stmt = update(ItemOwnership) \
+			.where(ItemOwnership.id == ownership_id) \
+			.values(quantity = ItemOwnership.quantity + amount)
+		self.session.execute(stmt)
+
+	def get_all_ownerships(self, username: str) -> List[ItemOwnership]:
+		stmt = select(ItemOwnership) \
+			.where(ItemOwnership.owner_username == username)
+		return self.session.execute(stmt).scalars().all()
 
 
 	
