@@ -1,3 +1,4 @@
+from logging import Logger
 import grpc
 from injector import Module, multiprovider, singleton
 from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
@@ -17,10 +18,12 @@ class BindInterceptors(Module):
 	def interceptors(
 		self,
 		auth_usecase: AuthUsecase,
-		tracer: Tracer
+		tracer: Tracer,
+		logger: Logger,
 	) -> list[grpc.ServerInterceptor]:
 		return [
 			OpenTelemetryServerInterceptor(tracer),
+			LoggingInterceptor(logger),
 			ExceptionInterceptor(),
 			AuthInterceptor(auth_usecase),
 		]
@@ -64,4 +67,29 @@ class ExceptionInterceptor(grpc.ServerInterceptor):
 			wrapper,
 		)
 		
-	
+class LoggingInterceptor(grpc.ServerInterceptor):
+	def __init__(self, logger: Logger):
+		self.log = logger
+		
+	def intercept_service(self, continuation, details: grpc.HandlerCallDetails):
+		def wrapper(behavior, _, __):
+			def interceptor(request_or_iterator, context: ServicerContext):
+				try:
+					resp = behavior(request_or_iterator, context)
+					self.log.info(f" SCS {details.method}")
+					return resp
+				except (grpc.RpcError, exc.UsecaseError) as e:
+					self.log.warning(f" {e.code.value[0]:3} {details.method}")
+					self.log.info(f" error: {e}\nrequest: {request_or_iterator}")
+					raise e
+				except Exception as e:
+					self.log.warning(f" EXC {details.method}")
+					self.log.info(f" error: {e}\nrequest: {request_or_iterator}")
+					raise e
+			return interceptor
+		
+		return _wrap_rpc_behavior(
+			continuation(details),
+			wrapper,
+		)
+		

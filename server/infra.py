@@ -5,6 +5,7 @@ from opentelemetry.sdk.trace import TracerProvider, Span, Tracer
 from opentelemetry import trace
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
 from collections.abc import Callable
 
 from . import Configuration
@@ -18,12 +19,15 @@ class BindInfra(Module):
 		logging.basicConfig(
 			level = config.log_level(),
 		)
-		return logging.getLogger(__name__)
+		return logging.getLogger()
 
 	@provider
 	@singleton
 	def tracer(self) -> Tracer:
-		provider = TracerProvider()
+		resource = Resource.create({
+			"service.name": "basic_service"
+		})
+		provider = TracerProvider(resource = resource)
 		exporter = BatchSpanProcessor(OTLPSpanExporter())
 		provider.add_span_processor(exporter)
 
