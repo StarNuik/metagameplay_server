@@ -53,4 +53,17 @@ def create_parser(service: Service) -> ArgumentParser:
 	)
 	sell.set_defaults(func = service.sell_item)
 	sell.add_argument("item_name")
+
+	# User
+	user_info = subparsers.add_parser(
+		name = "user_info",
+		help = "show user name, credits",
+	)
+	user_info.set_defaults(func = service.user_info)
+
+	owned_items = subparsers.add_parser(
+		name = "owned_items",
+		help = "show items owned by the user",
+	)
+	owned_items.set_defaults(func = service.owned_items)
 	return parser

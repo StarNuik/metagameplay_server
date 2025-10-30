@@ -9,7 +9,7 @@ from injector import Binder, inject, singleton
 
 from api import api_pb2_grpc as api
 from api import api_pb2 as dto
-from . import Repository
+from . import Repository, exc
 
 def bind_usecase(binder: Binder):
 	binder.bind(Usecase, Usecase, singleton)
@@ -27,31 +27,52 @@ class Usecase:
 		self.shop = shop_client
 		self.repo = session_repo
 	
-	def login(self, username: str) -> dto.User:
 		# TODO login test
 		# TODO caching
-		req = dto.LoginReq(username = username)
+	def login(self, username: str):
+		if self.repo.get_user() is not None:
+			raise exc.LoggedInError()
 		
+		req = dto.LoginReq(username = username)
 		resp: dto.UserSession = self.auth.Login(req)
 
 		self.repo.set_token(resp.session_token)
 
-		resp = self.shop.GetLoginReward(dto.Empty())
-		return resp
+		req = dto.Empty()
+		resp: dto.User = self.shop.GetLoginReward(req)
 
-	def logout(self):
-		self.repo.clear()
+		self.repo.set_user(resp)
 
 	def get_shop_items(self) -> dto.ItemsList:
-		resp = self.shop.GetShopItems(dto.Empty())
+		shop_items = self.repo.get_shop_items()
+		if shop_items is not None:
+			return shop_items
+		
+		req = dto.Empty()
+		resp: dto.ItemsList = self.shop.GetShopItems(req)
+
+		self.repo.set_shop_items(resp)
 		return resp
 
-	def buy_item(self, item_name: str) -> dto.User:
+	def buy_item(self, item_name: str):
 		req = dto.BuyItemReq(item_name = item_name)
 		resp: dto.User = self.shop.BuyItem(req)
-		return resp
+		self.repo.set_user(resp)
 
-	def sell_item(self, item_name: str) -> dto.User:
+	def sell_item(self, item_name: str):
 		req = dto.SellItemReq(item_name = item_name)
 		resp: dto.User = self.shop.SellItem(req)
-		return resp
+		self.repo.set_user(resp)
+	
+	def logout(self):
+		if self.repo.get_token() is None:
+			raise exc.LoggedOutError()
+		self.repo.clear()
+	
+	def get_user(self) -> dto.User:
+		user = self.repo.get_user()
+		if user is None:
+			raise exc.NotLoggedInError()
+		
+		return user
+

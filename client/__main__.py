@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import grpc
 from injector import Injector, singleton
 
 from . import *
@@ -24,8 +25,12 @@ def main():
 
 	try:
 		args.func(args)
-	except:
-		pass
+	except exc.UsecaseError as e:
+		print(f"Error: {e.message}")
+	except grpc.RpcError as e:
+		print(f"Error: {e.details()}")
+	except Exception as e:
+		print(f"Error: {type(e)}")
 
 if __name__ == "__main__":
 	main()

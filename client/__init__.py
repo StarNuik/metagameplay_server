@@ -1,3 +1,5 @@
+from . import exc
+
 from .configuration import Configuration
 from .infra import BindInfra
 from .repository import Repository, bind_repository

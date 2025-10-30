@@ -22,7 +22,7 @@ class Configuration:
 		return val if val is not None else DEFAULT_HOSTNAME
 	
 	def log_level(self) -> int:
-		val = self.config.server.log_level
+		val = self.config.client.log_level
 		try:
 			return logging.getLevelNamesMapping()[val]
 		except:

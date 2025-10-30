@@ -6,7 +6,8 @@
 		"log_level": "INFO"
 	},
 	"client": {
-		"hostname": "localhost:65432"
+		"hostname": "localhost:65432",
+		"log_level": "FATAL"
 	},
 	"data": {
 		"credits_reward": {
