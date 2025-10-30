@@ -9,8 +9,8 @@ DEFAULT_SQLITE_PATH = ":memory:"
 DEFAULT_CREDITS_REWARD = (0, 0)
 DEFAULT_LOG_LEVEL = logging.ERROR
 
-class Configuration():
-	def __init__(self, path):
+class Configuration:
+	def __init__(self, path: str):
 		builder = ConfigBuilder()
 		builder.set_field_access_optional()
 		builder.validate_field_type("data.items", list)

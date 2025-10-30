@@ -1,16 +1,16 @@
 import random
-import injector
+from injector import Binder, inject, singleton
 from api import api_pb2 as dto
 
 from server import *
 from server import jwt_session as jwts
 from server import exc
 
-def bind_shop_usecase(binder: injector.Binder):
-	binder.bind(ShopUsecase, to = ShopUsecase, scope = injector.singleton)
+def bind_shop_usecase(binder: Binder):
+	binder.bind(ShopUsecase, to = ShopUsecase, scope = singleton)
 
 class ShopUsecase:
-	@injector.inject
+	@inject
 	def __init__(self, config: Configuration):
 		self.reward_range = config.credits_reward()
 

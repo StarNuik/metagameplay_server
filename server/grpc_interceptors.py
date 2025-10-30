@@ -1,17 +1,19 @@
 import grpc
+from injector import Module, multiprovider, singleton
 from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
 from opentelemetry.instrumentation.grpc._server import OpenTelemetryServerInterceptor
 from opentelemetry.sdk.trace import Tracer
+
+from opentelemetry.instrumentation.grpc._client import OpenTelemetryClientInterceptor
 
 from server import *
 from server import jwt_session as jwts
 from server import exc
 
-import injector
 
-class BindInterceptors(injector.Module):
-	@injector.multiprovider
-	@injector.singleton
+class BindInterceptors(Module):
+	@multiprovider
+	@singleton
 	def interceptors(
 		self,
 		auth_usecase: AuthUsecase,

@@ -1,18 +1,18 @@
 import grpc
 from concurrent import futures
-import injector
+from injector import Binder, CallableProvider, inject, singleton
 from api import api_pb2_grpc as api
 
 from . import *
 
-def bind_grpc_server(binder: injector.Binder):
+def bind_grpc_server(binder: Binder):
 	binder.bind(
 		grpc.Server,
-		to = injector.CallableProvider(create_grpc_server),
-		scope = injector.singleton,
+		to = CallableProvider(create_grpc_server),
+		scope = singleton,
 	)
 
-@injector.inject
+@inject
 def create_grpc_server(
 	interceptors: list[grpc.ServerInterceptor],
 	servicer: Servicer,

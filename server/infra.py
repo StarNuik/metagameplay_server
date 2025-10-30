@@ -7,12 +7,17 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from collections.abc import Callable
 
+from . import Configuration
+
 type TracerSpanFactory = Callable[[str], Span]
 
 class BindInfra(Module):
 	@provider
 	@singleton
-	def logger(self) -> Logger:
+	def logger(self, config: Configuration) -> Logger:
+		logging.basicConfig(
+			level = config.log_level(),
+		)
 		return logging.getLogger(__name__)
 
 	@provider

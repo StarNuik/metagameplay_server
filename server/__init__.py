@@ -1,6 +1,6 @@
-from .infra import BindInfra, TracerSpanFactory
 from .db_model import User, Item, ItemOwnership
 from .configuration import Configuration
+from .infra import BindInfra, TracerSpanFactory
 from .db_setup import BindDbClient, OrmSessionFactory, migrate_db
 from .db_session import BindDbSession, DbSession, DbSessionFactory
 from .usecase_auth import AuthUsecase, bind_auth_usecase

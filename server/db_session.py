@@ -1,6 +1,6 @@
 from typing import List
 from sqlalchemy import select, update, insert
-import injector
+from injector import Module, provider, singleton
 from collections.abc import Callable
 
 from . import *
@@ -9,9 +9,9 @@ DB_SESSION_TRACE_NAME = "db_session"
 
 type DbSessionFactory = Callable[..., DbSession]
 
-class BindDbSession(injector.Module):
-	@injector.provider
-	@injector.singleton
+class BindDbSession(Module):
+	@provider
+	@singleton
 	def db_session_factory(
 		self,
 		session_factory: OrmSessionFactory,

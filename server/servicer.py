@@ -1,4 +1,4 @@
-import injector
+from injector import Binder, inject, singleton
 from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
 from api import api_pb2 as dto
 from api import api_pb2_grpc as api
@@ -8,15 +8,15 @@ from server import jwt_session as jwts
 
 GET_USER_TRACE_NAME = "get_user"
 
-def bind_servicer(binder: injector.Binder):
+def bind_servicer(binder: Binder):
 	binder.bind(
 		Servicer,
 		to = Servicer,
-		scope = injector.singleton
+		scope = singleton
 	)
 
 class Servicer(api.AuthServicer, api.ShopServicer):
-	@injector.inject
+	@inject
 	def __init__(self,
 		db_session_factory: DbSessionFactory,
 		tracer_span_factory: TracerSpanFactory,

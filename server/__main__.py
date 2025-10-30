@@ -23,11 +23,7 @@ def run(injector: Injector):
 
 def main():
 	config = Configuration("./config.json")
-	logging.basicConfig(
-		level = config.log_level(),
-	)
-
-
+	
 	injector = Injector([
 			lambda binder : binder.bind(Configuration, to = config),
 			BindInterceptors,
