@@ -1,6 +1,5 @@
 import logging
 from python_json_config import ConfigBuilder
-
 from server import Item
 
 DEFAULT_PORT = 8080
@@ -14,6 +13,7 @@ class Configuration():
 	def __init__(self, path):
 		builder = ConfigBuilder()
 		builder.set_field_access_optional()
+		builder.validate_field_type("data.items", list)
 
 		self.config = builder.parse_config(path)
 	
@@ -26,12 +26,12 @@ class Configuration():
 		return val if val is not None else DEFAULT_WORKERS
 	
 	def item_list(self) -> list[Item]:
-		val = self.config.data.items
+		val = self.config.data.shop_items
 		items = val if val is not None else DEFAULT_ITEM_LIST
 		items = map(
 			lambda item : Item(
-				name = item.name,
-				price = item.price
+				name = item["name"],
+				price = item["price"]
 			),
 			items,
 		)

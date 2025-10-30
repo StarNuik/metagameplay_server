@@ -13,7 +13,7 @@
 			"min": 10,
 			"max": 100
 		},
-		"items": [
+		"shop_items": [
 			{
 				"name": "free_snack",
 				"price": 0
@@ -32,6 +32,9 @@
 			}, {
 				"name": "big_kat",
 				"price": 10000
+			}, {
+				"name": "huge_kaet",
+				"price": 100000
 			}
 		]
 	}

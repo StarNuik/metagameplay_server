@@ -31,12 +31,16 @@ class BindDbClient(Module):
 def migrate_db(engine: Engine, config: Configuration, log: Logger):
 	try:
 		_Table.metadata.create_all(engine, checkfirst = False)
-		with Session(engine) as session, session.begin():
-			session.add_all(config.item_list())
-			session.commit()
 	except OperationalError as e:
 		log.warning(f"Could not migrate db schema. Reason: {e._message()}")
-	except IntegrityError as e:
-		log.warning(f"Could not migrate config items. Reason: {e._message()}")
+	
+	# this allows adding new items to the config w/o deleting the sqlite file (not deleting)
+	for item in config.item_list():
+		try:
+			with Session(engine) as session, session.begin():
+				session.add(item)
+				session.commit()
+		except IntegrityError as e:
+			log.warning(f"Could not add an item from config. Reason: {e._message()}")
 
 
