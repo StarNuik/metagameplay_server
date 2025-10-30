@@ -1,9 +1,13 @@
+import injector
 from pathlib import Path
 
 from server import *
 from server import jwt_session as jwts
 from server import exc
 from api import api_pb2 as dto
+
+def bind_auth_usecase(binder: injector.Binder):
+	binder.bind(AuthUsecase, injector.ClassProvider(AuthUsecase), scope = injector.singleton)
 
 class AuthUsecase:
 	def __init__(self):

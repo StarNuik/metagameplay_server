@@ -1,17 +1,29 @@
 from typing import List
 from sqlalchemy import select, update, insert
 from sqlalchemy.orm import Session
-from dependency_injector import providers
+from injector import Module, provider
 from opentelemetry.sdk.trace import Span
+from collections.abc import Callable
 
 from . import *
 
 DB_SESSION_TRACE_NAME = "db_session"
 
+type DbSessionFactory = Callable[..., DbSession]
+
+class BindDbSession(Module):
+	@provider
+	def db_session(
+		self,
+		session_factory: OrmSessionFactory,
+		span_factory: TracerSpanFactory,
+	) -> DbSessionFactory:
+		return lambda : DbSession(session_factory, span_factory)
+
 class DbSessionBase:
 	def __init__(self,
-		session_factory: providers.Callable[Session],
-		tracer_span_factory: providers.Callable[Span]
+		session_factory: DbSessionFactory,
+		tracer_span_factory: TracerSpanFactory,
 	):
 		self.session = session_factory()
 		self.span = tracer_span_factory(DB_SESSION_TRACE_NAME)

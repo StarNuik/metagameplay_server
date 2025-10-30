@@ -6,8 +6,10 @@ import threading
 import logging
 import signal
 from concurrent import futures
+import injector
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError, OperationalError
 from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 from logging import Logger
@@ -20,46 +22,33 @@ from opentelemetry.instrumentation.grpc._server import OpenTelemetryServerInterc
 from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
 from api import api_pb2 as dto
 from api import api_pb2_grpc as api
+from grpc import ServerInterceptor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from injector import Injector, Module, provider
 
-from server import *
-from server import jwt_session as jwts
+from . import *
+from .model import _Table
 
-def run(injector: Injector):
-	log = injector.get(Logger)
-
-	server = injector.get(grpc.Server)
-	injector.call_with_injection(migrate_db)
-
-	try:
-		server.start()
-		server.wait_for_termination()
-	except KeyboardInterrupt:
-		log.info("Graceful shutdown")
-	finally:
-		log.info("Waiting for the server to finish")
-		server.stop(5).wait()
-		log.info("All finished, exiting")
-
-def main():
-	logging.basicConfig(
-		level=logging.INFO,
+def bind_grpc_server(binder: injector.Binder):
+	binder.bind(
+		grpc.Server,
+		to = injector.CallableProvider(create_grpc_server),
+		scope = injector.singleton,
 	)
 
-	injector = Injector([
-		BindInterceptors,
-		bind_auth_usecase,
-		BindInfra,
-		BindDbClient,
-		BindDbSession,
-		bind_servicer,
-		bind_shop_usecase,
-		bind_configuration,
-		bind_grpc_server,
-	], auto_bind = False)
-
-	run(injector)
-
-if __name__ == "__main__":
-	main()
+@injector.inject
+def create_grpc_server(
+	interceptors: list[grpc.ServerInterceptor],
+	servicer: Servicer,
+	config: Configuration,
+):
+	server = grpc.server(
+		futures.ThreadPoolExecutor(
+			max_workers = config.workers
+		),
+		interceptors = interceptors,
+	)
+	server.add_insecure_port(f"[::]:{config.port}")
+	
+	api.add_ShopServicer_to_server(servicer, server)
+	api.add_AuthServicer_to_server(servicer, server)
+	return server

@@ -1,18 +1,23 @@
+import random
 from dependency_injector import providers
+import injector
 from api import api_pb2 as dto
 
 from server import *
 from server import jwt_session as jwts
 from server import exc
 
-class ShopUsecase:
-	def __init__(
-		self,
-		reward_amount_factory: providers.Callable[int],
-	):
-		self.reward_amount = reward_amount_factory
-		pass
+def bind_shop_usecase(binder: injector.Binder):
+	binder.bind(ShopUsecase, to = ShopUsecase, scope = injector.singleton)
 
+class ShopUsecase:
+	@injector.inject
+	def __init__(self, config: Configuration):
+		self.reward_range = config.reward
+
+	def reward_amount(self) -> int:
+		return random.randrange(self.reward_range["min"], self.reward_range["max"])
+		
 	def get_user(self, db: DbSession, user_session: jwts.Session) -> dto.User:
 		username = user_session.username
 		user = db.get_user(username)

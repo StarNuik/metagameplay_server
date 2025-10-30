@@ -1,4 +1,4 @@
-from sqlalchemy import Text, Integer, ForeignKey
+from sqlalchemy import Text, Integer, ForeignKey, Engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class _Table(DeclarativeBase):
