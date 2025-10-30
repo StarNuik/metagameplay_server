@@ -38,26 +38,30 @@ def run(injector: Injector):
 	except KeyboardInterrupt:
 		log.info("Graceful shutdown")
 	finally:
-		log.info("Waiting for the server to finish")
+		log.info("Waiting for the server to finish (Press CTRL+C again to force shutdown)")
 		server.stop(5).wait()
 		log.info("All finished, exiting")
 
 def main():
+	config = Configuration("./config.json")
 	logging.basicConfig(
-		level=logging.INFO,
+		level = config.log_level(),
 	)
 
+
 	injector = Injector([
-		BindInterceptors,
-		bind_auth_usecase,
-		BindInfra,
-		BindDbClient,
-		BindDbSession,
-		bind_servicer,
-		bind_shop_usecase,
-		bind_configuration,
-		bind_grpc_server,
-	], auto_bind = False)
+			lambda binder : binder.bind(Configuration, to = config),
+			BindInterceptors,
+			bind_auth_usecase,
+			BindInfra,
+			BindDbClient,
+			BindDbSession,
+			bind_servicer,
+			bind_shop_usecase,
+			bind_grpc_server,
+		],
+		auto_bind = False
+	)
 
 	run(injector)
 

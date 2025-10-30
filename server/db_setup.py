@@ -7,7 +7,7 @@ from collections.abc import Callable
 from injector import inject, singleton, Module, provider
 
 from server import Configuration
-from .model import _Table
+from .db_model import _Table
 
 type OrmSessionFactory = Callable[..., Session]
 
@@ -19,7 +19,7 @@ class BindDbClient(Module):
 	@provider
 	@singleton
 	def db_client(self, config: Configuration, log: Logger) -> Engine:
-		engine = create_engine(f"sqlite:///{config.sqlite_path}")
+		engine = create_engine(f"sqlite:///{config.sqlite_path()}")
 
 		SQLAlchemyInstrumentor().instrument(
 			engine = engine,
@@ -31,7 +31,7 @@ def migrate_db(engine: Engine, config: Configuration, log: Logger):
 	try:
 		_Table.metadata.create_all(engine, checkfirst = False)
 		with Session(engine) as session, session.begin():
-			session.add_all(config.item_list)
+			session.add_all(config.item_list())
 			session.commit()
 	except OperationalError as e:
 		log.warning(f"Could not migrate db schema. Reason: {e._message()}")

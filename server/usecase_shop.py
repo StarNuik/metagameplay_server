@@ -13,10 +13,10 @@ def bind_shop_usecase(binder: injector.Binder):
 class ShopUsecase:
 	@injector.inject
 	def __init__(self, config: Configuration):
-		self.reward_range = config.reward
+		self.reward_range = config.credits_reward()
 
 	def reward_amount(self) -> int:
-		return random.randrange(self.reward_range["min"], self.reward_range["max"])
+		return random.randrange(self.reward_range[0], self.reward_range[1])
 		
 	def get_user(self, db: DbSession, user_session: jwts.Session) -> dto.User:
 		username = user_session.username

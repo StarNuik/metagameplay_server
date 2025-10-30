@@ -26,7 +26,7 @@ from grpc import ServerInterceptor
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 from . import *
-from .model import _Table
+from .db_model import _Table
 
 def bind_grpc_server(binder: injector.Binder):
 	binder.bind(
@@ -43,11 +43,11 @@ def create_grpc_server(
 ):
 	server = grpc.server(
 		futures.ThreadPoolExecutor(
-			max_workers = config.workers
+			max_workers = config.grpc_workers()
 		),
 		interceptors = interceptors,
 	)
-	server.add_insecure_port(f"[::]:{config.port}")
+	server.add_insecure_port(f"[::]:{config.port()}")
 	
 	api.add_ShopServicer_to_server(servicer, server)
 	api.add_AuthServicer_to_server(servicer, server)

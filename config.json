@@ -1,7 +1,9 @@
 {
 	"server": {
 		"port": 65432,
-		"workers": 5
+		"grpc_workers": 5,
+		"sqlite_path": ".server.db",
+		"log_level": "INFO"
 	},
 	"client": {
 		"hostname": "localhost:65432"
