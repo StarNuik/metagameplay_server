@@ -1,5 +1,4 @@
 import random
-from dependency_injector import providers
 import injector
 from api import api_pb2 as dto
 

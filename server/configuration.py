@@ -1,7 +1,4 @@
-import configparser
 import logging
-# def bind_configuration(binder: injector.Binder):
-# 	binder.bind(Configuration, Configuration, scope = injector.singleton)
 from python_json_config import ConfigBuilder
 
 from server import Item

@@ -1,10 +1,7 @@
 import grpc
-from pathlib import Path
 from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
-from dependency_injector.containers import DynamicContainer
-from dependency_injector import providers
 from opentelemetry.instrumentation.grpc._server import OpenTelemetryServerInterceptor
-from opentelemetry.sdk.trace import TracerProvider, Span, Tracer
+from opentelemetry.sdk.trace import Tracer
 
 from server import *
 from server import jwt_session as jwts
@@ -14,6 +11,7 @@ import injector
 
 class BindInterceptors(injector.Module):
 	@injector.multiprovider
+	@injector.singleton
 	def interceptors(
 		self,
 		auth_usecase: AuthUsecase,

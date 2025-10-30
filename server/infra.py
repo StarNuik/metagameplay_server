@@ -3,17 +3,15 @@ import logging
 from injector import provider, Module, singleton
 from opentelemetry.sdk.trace import TracerProvider, Span, Tracer
 from opentelemetry import trace
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.instrumentation.grpc._server import OpenTelemetryServerInterceptor
-from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
 from collections.abc import Callable
 
 type TracerSpanFactory = Callable[[str], Span]
 
 class BindInfra(Module):
 	@provider
+	@singleton
 	def logger(self) -> Logger:
 		return logging.getLogger(__name__)
 
@@ -30,5 +28,6 @@ class BindInfra(Module):
 		return tracer
 
 	@provider
+	@singleton
 	def span_factory(self, tracer: Tracer) -> TracerSpanFactory:
 		return lambda name : tracer.start_as_current_span(name)

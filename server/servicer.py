@@ -1,7 +1,4 @@
-from dependency_injector import providers
-from logging import Logger
 import injector
-from opentelemetry.sdk.trace import Span
 from opentelemetry.instrumentation.grpc._server import _OpenTelemetryServicerContext as ServicerContext
 from api import api_pb2 as dto
 from api import api_pb2_grpc as api
@@ -11,11 +8,12 @@ from server import jwt_session as jwts
 
 GET_USER_TRACE_NAME = "get_user"
 
-class Servicer:
-	pass
-
 def bind_servicer(binder: injector.Binder):
-	binder.bind(Servicer, to = Servicer, scope = injector.singleton)
+	binder.bind(
+		Servicer,
+		to = Servicer,
+		scope = injector.singleton
+	)
 
 class Servicer(api.AuthServicer, api.ShopServicer):
 	@injector.inject

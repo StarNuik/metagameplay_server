@@ -13,6 +13,7 @@ type OrmSessionFactory = Callable[..., Session]
 
 class BindDbClient(Module):
 	@provider
+	@singleton
 	def orm_session_factory(self, db_client: Engine) -> OrmSessionFactory:
 		return lambda : Session(db_client)
 
@@ -37,7 +38,5 @@ def migrate_db(engine: Engine, config: Configuration, log: Logger):
 		log.warning(f"Could not migrate db schema. Reason: {e._message()}")
 	except IntegrityError as e:
 		log.warning(f"Could not migrate config items. Reason: {e._message()}")
-# def explicit_bind_db_client(self, injector: Injector, db_client: Engine):
-# 	injector.binder.bind(Engine, to = db_client, scope = singleton)
 
 
