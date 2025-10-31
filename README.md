@@ -1,4 +1,4 @@
-# metagameplay_server
+# Shop Server
 
 ## Run
 ```bash
