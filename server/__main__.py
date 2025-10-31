@@ -13,6 +13,7 @@ def run(injector: Injector):
 
 	try:
 		server.start()
+		log.info("Server is running")
 		server.wait_for_termination()
 	except KeyboardInterrupt:
 		log.info("Graceful shutdown")

@@ -7,7 +7,7 @@
 	},
 	"client": {
 		"hostname": "localhost:65432",
-		"log_level": "INFO"
+		"log_level": "ERROR"
 	},
 	"data": {
 		"credits_reward": {

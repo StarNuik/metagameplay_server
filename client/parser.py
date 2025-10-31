@@ -15,7 +15,8 @@ def bind_parser(binder: Binder):
 def create_parser(service: Service) -> ArgumentParser:
 	parser = ArgumentParser()
 	subparsers = parser.add_subparsers(
-		title = "subcommands",
+		title = "Available commands",
+		metavar = "COMMAND",
 		required = True,
 	)
 
