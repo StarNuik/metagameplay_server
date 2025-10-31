@@ -25,7 +25,7 @@ class BindInfra(Module):
 	@singleton
 	def tracer(self) -> Tracer:
 		resource = Resource.create({
-			"service.name": "basic_service"
+			"service.name": "shop_service"
 		})
 		provider = TracerProvider(resource = resource)
 		exporter = BatchSpanProcessor(OTLPSpanExporter())

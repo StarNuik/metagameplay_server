@@ -6,7 +6,7 @@ git clone git@github.com:StarNuik/shop_server.git
 cd ./shop_server
 
 python -m venv ./.venv
-source ./.venv/bin/activate.fish
+source ./.venv/bin/activate
 pip install -r requirements.txt
 
 docker compose up -d # Run Jaeger
