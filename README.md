@@ -2,14 +2,14 @@
 
 ## Run
 ```bash
-git clone
-cd
+git clone git@github.com:StarNuik/shop_server.git
+cd ./shop_server
 
 python -m venv ./.venv
 source ./.venv/bin/activate.fish
 pip install -r requirements.txt
 
-docker compose up -d
+docker compose up -d # Run Jaeger
 
 python -m server
 python -m client [-h] COMMAND
